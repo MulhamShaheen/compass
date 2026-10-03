@@ -1,0 +1,25 @@
+/* Theme tokens ported from docs/prototype/compass.html. Components use only these. */
+:root {
+  --bg: #e9eeec; --panel: #f7f9f8; --ink: #1b2a2f; --muted: #5d6f72; --line: #cfd8d6;
+  --accent: #2a6f73; --brass: #a5731c; --brass-soft: #f1e3c4;
+  --good: #2f7d4f; --bad: #b0443a;
+  --a-body: #2a78d6; --a-mind: #eb6834; --a-bonds: #1baf7a; --a-craft: #eda100; --a-spirit: #e87ba4;
+  --display: var(--font-display), Georgia, serif;
+  --body: var(--font-body), system-ui, sans-serif;
+  --mono: var(--font-mono), ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111a1d; --panel: #18242a; --ink: #e3ebe9; --muted: #93a6a8; --line: #2b3b41;
+    --accent: #5fb3b3; --brass: #d9a54a; --brass-soft: #3a2f1a; --good: #5cbf83; --bad: #e2766b;
+    --a-body: #3987e5; --a-mind: #d95926; --a-bonds: #199e70; --a-craft: #c98500; --a-spirit: #d55181;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111a1d; --panel: #18242a; --ink: #e3ebe9; --muted: #93a6a8; --line: #2b3b41;
+  --accent: #5fb3b3; --brass: #d9a54a; --brass-soft: #3a2f1a; --good: #5cbf83; --bad: #e2766b;
+  --a-body: #3987e5; --a-mind: #d95926; --a-bonds: #199e70; --a-craft: #c98500; --a-spirit: #d55181;
+  color-scheme: dark;
+}

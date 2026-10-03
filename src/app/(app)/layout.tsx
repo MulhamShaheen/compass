@@ -1,0 +1,21 @@
+import { redirect } from "next/navigation";
+import { DevBar } from "@/components/DevBar";
+import { Header, Nav } from "@/components/Header";
+import { readDb } from "@/lib/db/local-store";
+import { buildHeader } from "@/lib/view";
+
+export const dynamic = "force-dynamic";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const db = readDb();
+  if (!db.profile?.prologueCompletedAt) redirect("/prologue");
+  const header = buildHeader(db);
+  return (
+    <div className="wrap">
+      <Header view={header} />
+      <Nav reviewUnlocked={header.reviewUnlocked} />
+      {children}
+      <DevBar dayNumber={header.dayNumber} dayOffset={header.dayOffset} todayLabel={header.todayLabel} />
+    </div>
+  );
+}

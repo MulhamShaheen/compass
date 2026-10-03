@@ -1,0 +1,501 @@
+<title>Compass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an expedition logbook. Header with True North and level; board of character + where life goes | quest threads | today & habits; logbook beneath. Stacks on phones. */
+:root{
+  --bg:#e9eeec; --panel:#f7f9f8; --ink:#1b2a2f; --muted:#5d6f72; --line:#cfd8d6;
+  --accent:#2a6f73; --brass:#a5731c; --brass-soft:#f1e3c4;
+  --good:#2f7d4f; --bad:#b0443a;
+  --a-body:#2a78d6; --a-mind:#eb6834; --a-bonds:#1baf7a; --a-craft:#eda100; --a-spirit:#e87ba4;
+  --display:"Young Serif",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111a1d; --panel:#18242a; --ink:#e3ebe9; --muted:#93a6a8; --line:#2b3b41;
+  --accent:#5fb3b3; --brass:#d9a54a; --brass-soft:#3a2f1a; --good:#5cbf83; --bad:#e2766b;
+  --a-body:#3987e5; --a-mind:#d95926; --a-bonds:#199e70; --a-craft:#c98500; --a-spirit:#d55181; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111a1d; --panel:#18242a; --ink:#e3ebe9; --muted:#93a6a8; --line:#2b3b41;
+  --accent:#5fb3b3; --brass:#d9a54a; --brass-soft:#3a2f1a; --good:#5cbf83; --bad:#e2766b;
+  --a-body:#3987e5; --a-mind:#d95926; --a-bonds:#199e70; --a-craft:#c98500; --a-spirit:#d55181; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1260px;margin:0 auto;display:grid;gap:18px}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+.label{font:500 11px/1.2 var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[contenteditable]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input[type=text],input[type=datetime-local],textarea,select{background:var(--panel);border:1px solid var(--line);color:var(--ink);border-radius:6px;padding:7px 10px;font:inherit;font-size:14px;min-width:0}
+textarea{width:100%;min-height:90px;resize:vertical;line-height:1.5}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--bg);border-radius:6px;padding:7px 14px;font-size:13px;font-weight:500}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.link{border:0;background:none;padding:0;color:var(--accent);text-decoration:underline;font-size:13px}
+
+header{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:16px}
+.brand{display:flex;gap:14px;align-items:center}
+.rose{width:46px;height:46px;flex:none}
+.brand h1{font-size:30px;line-height:1}
+.chapter{color:var(--muted);font-size:14px;margin-top:4px}
+.north{flex:1 1 320px;min-width:0;max-width:520px}
+.north p{margin:4px 0 0;font-family:var(--display);font-size:17px;line-height:1.35}
+.lvl{display:grid;gap:6px;min-width:200px}
+.lvlrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.lvlrow b{font-family:var(--display);font-weight:400;font-size:22px}
+.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--brass);border-radius:4px;transition:width .4s}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:transparent;padding:6px 14px;border-radius:999px;font-size:13px}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.example{font-size:12px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.board{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr) minmax(0,290px);gap:18px;align-items:start}
+@media (max-width:1060px){.board{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.col-quests{grid-column:1/-1;order:-1}}
+@media (max-width:660px){.board{grid-template-columns:minmax(0,1fr)}}
+.col{display:grid;gap:18px;min-width:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px;min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.panel-h h2{font-size:19px}
+
+/* attributes */
+.sw{display:inline-block;width:10px;height:10px;border-radius:3px;flex:none}
+.attrs{display:grid;gap:12px}
+.attr{display:grid;grid-template-columns:auto 1fr auto;gap:3px 8px;align-items:center}
+.attr .nm{font-weight:500}
+.attr .bar{grid-column:1/-1;height:5px}
+.attr small{grid-column:1/-1;color:var(--muted);font-size:12px}
+
+/* where life goes */
+.seg{display:flex;gap:2px;flex-wrap:wrap}
+.seg button{border:1px solid var(--line);background:transparent;border-radius:6px;padding:2px 9px;font-size:12px}
+.seg button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.share{display:grid;gap:8px}
+.share-row{display:grid;grid-template-columns:62px 1fr auto;gap:8px;align-items:center;font-size:13px}
+.share-row .track{height:12px;position:relative}
+.share-row .track i{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0;min-width:2px}
+.share-row .v{text-align:right;color:var(--muted);white-space:nowrap;font-size:12px}
+.chart{position:relative}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.chart text{fill:var(--muted);font:10px var(--mono)}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font-size:12px;padding:8px 10px;border-radius:6px;min-width:130px;display:grid;gap:2px;z-index:2;transform:translate(-50%,-100%)}
+.tip div{display:flex;gap:6px;align-items:center;justify-content:space-between}
+.tip span{display:flex;gap:6px;align-items:center}
+.insight{font-size:13px;color:var(--muted);margin:0}
+
+/* quests */
+.qfilter{display:flex;gap:4px;flex-wrap:wrap}
+.qfilter button{border:1px solid var(--line);background:transparent;border-radius:6px;padding:3px 10px;font-size:12px}
+.qfilter button[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.qlist{display:grid;gap:8px}
+.qrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;text-align:left;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--bg);width:100%}
+.qrow:hover{border-color:var(--accent)}
+.qrow.main{border-left:3px solid var(--brass)}
+.qrow h3{font-size:17px;line-height:1.25}
+.qrow .meta{grid-column:1/-1;display:flex;gap:6px 14px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
+.chip{font:500 10.5px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;align-self:start}
+.chip.main{color:var(--brass);border-color:var(--brass)}
+.chip.side{color:var(--accent);border-color:var(--accent)}
+.chip.paused{color:var(--muted)}
+.chip.done{color:var(--good);border-color:var(--good)}
+.atag{display:inline-flex;gap:5px;align-items:center;font-size:12px;color:var(--ink)}
+.pulse{grid-column:1/-1;display:grid;grid-template-columns:repeat(16,1fr);gap:2px;height:14px}
+.pulse i{background:var(--line);border-radius:2px}
+.pulse i.on1{background:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.pulse i.on2{background:var(--accent)}
+.addq{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.addq .row{display:flex;gap:8px;flex-wrap:wrap}
+.addq .row>*{flex:1 1 140px}
+
+/* thread */
+.thread{display:grid;gap:14px}
+.thead{display:grid;gap:8px}
+.thead h2{font-size:24px}
+.why{font-family:var(--display);font-size:16px;color:var(--muted);margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:2px}
+.stat b{font:500 18px var(--mono)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cpform{display:grid;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px}
+.cpform .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cpform .row>input,.cpform .row>select{flex:1 1 150px}
+.cpform label.ms{display:flex;gap:6px;align-items:center;font-size:13px;flex:0 0 auto}
+.preview{font-size:12px;color:var(--muted)}
+.timeline{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.cp{display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px}
+.cp .rail{position:relative;display:flex;justify-content:center}
+.cp .rail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--line)}
+.cp:first-child .rail::before{top:10px}
+.cp:last-child .rail::before{bottom:calc(100% - 14px)}
+.cp .dot{position:relative;margin-top:6px;width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid var(--accent)}
+.cp.ms .dot{width:14px;height:14px;margin-top:4px;background:var(--brass);border-color:var(--brass);transform:rotate(45deg);border-radius:2px}
+.cp .body{padding-bottom:16px;display:grid;gap:3px;min-width:0}
+.cp .when{font:12px var(--mono);color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.cp h4{margin:0;font-size:15px;font-weight:600}
+.cp p{margin:0;font-size:14px;max-width:65ch;white-space:pre-wrap}
+.cp .gain{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted);align-items:center}
+.cp .gain .link{font-size:12px;color:var(--muted)}
+.gap{font:11px var(--mono);color:var(--muted);padding:0 0 12px}
+
+/* today */
+.loop{display:grid;gap:8px}
+.loopstep{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;font-size:14px}
+.loopstep .n{width:24px;height:24px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font:500 11px var(--mono);color:var(--muted)}
+.loopstep.done .n{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.loopstep small{display:block;color:var(--muted);font-size:12px}
+.weather{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.weather button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:8px 2px 6px;display:grid;gap:2px;justify-items:center;font-size:11px;color:var(--muted)}
+.weather button svg{width:22px;height:22px;stroke:var(--ink);fill:none;stroke-width:1.6}
+.weather button[aria-pressed="true"]{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 12%,transparent)}
+
+.habits{display:grid;gap:10px}
+.habit{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.habit .nm{font-size:14px;min-width:0}
+.habit .nm small{color:var(--muted);font-size:12px}
+.dots{display:flex;gap:3px}
+.dots i{width:10px;height:10px;border-radius:2px;background:var(--line)}
+.dots i.y{background:var(--good)}
+.habit.bad .dots i.y{background:var(--bad)}
+.tick{width:30px;height:30px;border-radius:6px;border:1px solid var(--line);background:transparent;font-size:14px;grid-row:span 2}
+.tick[aria-pressed="true"]{background:var(--good);border-color:var(--good);color:var(--panel)}
+.habit.bad .tick[aria-pressed="true"]{background:var(--bad);border-color:var(--bad)}
+
+.journal{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.journal{grid-template-columns:minmax(0,1fr)}}
+.prompt{font-family:var(--display);font-size:17px;line-height:1.35}
+.entries{display:grid;gap:12px;max-height:340px;overflow:auto;padding-right:4px}
+.entry{border-left:2px solid var(--line);padding-left:12px;display:grid;gap:2px}
+.entry p{margin:0;font-size:14px;max-width:65ch}
+.entry .meta{display:flex;gap:8px;font-size:12px;color:var(--muted)}
+
+.codex{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+.codex p,.codex li{font-size:14px;max-width:65ch}
+.codex ul,.codex ol{margin:0;padding-left:18px;display:grid;gap:4px}
+.codex dl{margin:0;display:grid;gap:8px}
+.codex dt{font-weight:600;font-size:14px}
+.codex dd{margin:0;color:var(--muted);font-size:14px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:13px;opacity:0;transition:.25s;pointer-events:none;max-width:calc(100% - 32px)}
+.toast.on{opacity:1;transform:translateX(-50%)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg class="rose" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="22" fill="none" stroke="var(--line)" stroke-width="1.5"/><path d="M24 4 L28 24 L24 44 L20 24Z" fill="var(--brass)"/><path d="M24 4 L28 24 L20 24Z" fill="var(--ink)"/><path d="M4 24 L24 21 L44 24 L24 27Z" fill="var(--muted)" opacity=".5"/><circle cx="24" cy="24" r="2.5" fill="var(--panel)" stroke="var(--ink)"/></svg>
+      <div><h1>Compass</h1><div class="chapter" id="chapter"></div></div>
+    </div>
+    <div class="north">
+      <div class="label">True North</div>
+      <p id="north" contenteditable="true" spellcheck="false" aria-label="Your purpose statement, editable"></p>
+    </div>
+    <div class="lvl">
+      <div class="lvlrow"><span class="label">Character level</span><b class="mono" id="lvl"></b></div>
+      <div class="bar"><i id="lvlbar"></i></div>
+      <span class="label" id="xpnote"></span>
+    </div>
+  </header>
+
+  <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="board">The map</button>
+      <button role="tab" aria-selected="false" data-tab="codex">How it plays</button>
+    </div>
+    <div class="example">Example character, saved only in this browser. <button class="link" id="reset">Reset sample</button></div>
+  </div>
+
+  <main id="board">
+    <div class="board">
+      <div class="col">
+        <section class="panel">
+          <div class="panel-h"><h2>Character</h2><span class="label">from quest progress</span></div>
+          <div class="attrs" id="attrs"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-h"><h2>Where life goes</h2>
+            <div class="seg" id="range"><button aria-pressed="false" data-r="30">30d</button><button aria-pressed="true" data-r="90">90d</button><button aria-pressed="false" data-r="0">All</button></div>
+          </div>
+          <div class="label">Hours by attribute</div>
+          <div class="share" id="share"></div>
+          <p class="insight" id="insight"></p>
+          <div class="label" style="margin-top:4px">Hours per week · last 12 weeks</div>
+          <div class="chart" id="weekly"></div>
+        </section>
+      </div>
+
+      <div class="col col-quests">
+        <section class="panel" id="qpanel"></section>
+      </div>
+
+      <div class="col">
+        <section class="panel">
+          <div class="panel-h"><h2>Today</h2><span class="label mono" id="today"></span></div>
+          <div class="loop" id="loop"></div>
+          <div class="label">Inner weather</div>
+          <div class="weather" id="weather"></div>
+        </section>
+        <section class="panel">
+          <div class="panel-h"><h2>Habits</h2><span class="label">last 7 days</span></div>
+          <div class="habits" id="habits"></div>
+        </section>
+      </div>
+    </div>
+
+    <section class="panel" style="margin-top:18px">
+      <div class="panel-h"><h2>Logbook</h2><span class="label">diary &amp; reflection</span></div>
+      <div class="journal">
+        <form id="jform" style="display:grid;gap:10px">
+          <div class="prompt" id="prompt"></div>
+          <textarea id="jtext" placeholder="Write a few lines. Nobody grades this."></textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" type="submit">Log entry</button>
+            <button class="btn ghost" type="button" id="newprompt">Another question</button>
+          </div>
+        </form>
+        <div class="entries" id="entries"></div>
+      </div>
+    </section>
+  </main>
+
+  <main id="codex" hidden>
+    <div class="codex">
+      <section class="panel">
+        <h2>The idea</h2>
+        <p>Your life is one long storyline. Compass is the window onto it: the threads you are following, how far each has come, how you feel, and where your time actually goes.</p>
+        <p>A quest is a thread, not a task. It can run for months. You move it forward by logging checkpoints: what happened, when, how long it took and what you think about it. Read back, a quest becomes the story of that part of your life.</p>
+      </section>
+      <section class="panel">
+        <h2>Building blocks</h2>
+        <dl>
+          <dt>True North</dt><dd>One sentence of purpose. Main quests should point at it.</dd>
+          <dt>Quests</dt><dd>Long-running threads, main or side. Each links to one or two attributes and can be active, paused or completed.</dd>
+          <dt>Checkpoints</dt><dd>Dated entries inside a quest: a title, your commentary, time spent, and an optional milestone flag.</dd>
+          <dt>Attributes</dt><dd>Body, Mind, Bonds, Craft, Spirit. Checkpoints feed them, so you can see which parts of life get your time.</dd>
+          <dt>Habits</dt><dd>Good ones to keep, bad ones to starve, with a 7-day strip.</dd>
+          <dt>Inner weather and logbook</dt><dd>How you feel today, and a short diary with one reflective question.</dd>
+        </dl>
+      </section>
+      <section class="panel">
+        <h2>How points work</h2>
+        <ul>
+          <li>Each checkpoint earns 1 point per 6 minutes spent (10 per hour).</li>
+          <li>A milestone adds a 25-point bonus.</li>
+          <li>A checkpoint with no time logged still earns 2 points, because noticing counts.</li>
+          <li>Quests with two attributes split points 70/30 between primary and secondary.</li>
+          <li>Each attribute levels up every 150 points. Character level rises every 400 points in total.</li>
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>The daily loop</h2>
+        <ol>
+          <li><b>Morning check-in.</b> Set your inner weather.</li>
+          <li><b>Move a thread.</b> Log at least one checkpoint on any quest.</li>
+          <li><b>Evening logbook.</b> Answer one question.</li>
+          <li><b>Weekly look.</b> Check where life went this week and whether it matches your True North.</li>
+        </ol>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const ATTRS=[["body","Body"],["mind","Mind"],["bonds","Bonds"],["craft","Craft"],["spirit","Spirit"]];
+const AN=k=>ATTRS.find(a=>a[0]===k)[1];
+const AC=k=>`var(--a-${k})`;
+const WEATHER=[["clear","Clear",'<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>'],
+ ["breezy","Breezy",'<path d="M3 9h11a3 3 0 1 0-3-3M3 15h15a3 3 0 1 1-3 3M3 12h8"/>'],
+ ["cloudy","Cloudy",'<path d="M7 18h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 1.5A3.3 3.3 0 0 0 7 18z"/>'],
+ ["foggy","Foggy",'<path d="M4 9h16M6 13h12M4 17h16"/>'],
+ ["stormy","Stormy",'<path d="M7 15h10a4 4 0 0 0 0-8 6 6 0 0 0-11.5 1.5A3.3 3.3 0 0 0 7 15z"/><path d="m12 15-2 4h3l-2 4"/>']];
+const PROMPTS=["What moved the story forward today?","Who did you spend time with, and how did it feel?","What drained you, and what fed you?","If today were a chapter title, what would it be?","What would you tell yourself from one year ahead?","Which quest are you avoiding, and why?","What small thing went better than expected?"];
+const TIMES=[[0,"Just a note"],[15,"15 min"],[30,"30 min"],[45,"45 min"],[60,"1 hour"],[90,"1.5 hours"],[120,"2 hours"],[180,"3 hours"],[240,"Half a day"],[480,"Full day"]];
+const KEY="compass-proto-v2";
+const pad=n=>String(n).padStart(2,"0");
+const dstr=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const dtstr=d=>`${dstr(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const TODAY=dstr(new Date());
+function ago(n){const d=new Date();d.setDate(d.getDate()-n);return dstr(d)}
+function at(n,h,m=0){const d=new Date();d.setDate(d.getDate()-n);d.setHours(h,m,0,0);return dtstr(d)}
+const parse=s=>new Date(s.length<=10?s+"T00:00":s);
+const daysBetween=(a,b)=>Math.round((parse(dstr(b))-parse(dstr(a)))/864e5);
+
+function sample(){let i=1;const cp=(n,h,m,title,note,mins,ms)=>({id:i++,at:at(n,h,m),title,note,mins,ms:!!ms});return{
+  chapter:"Chapter 3 · The Builder's Year",
+  north:"Build things that matter, stay close to the people I love, and keep my body strong enough to enjoy it.",
+  quests:[
+   {id:1,type:"main",attrs:["craft","mind"],title:"Launch Compass",why:"Turn my own way of living into a tool others can use.",start:ago(40),status:"active",cps:[
+     cp(40,23,10,"The idea lands","Wrote the first page about life as a storyline. Felt more like a confession than a plan.",30),
+     cp(33,21,0,"Sketched quests and attributes","Body, Mind, Bonds, Craft, Spirit. Five feels right; more would turn into bookkeeping.",60),
+     cp(19,19,30,"Looked at other habit apps","Most are checklists with confetti. None let a goal be a story that lasts months.",90),
+     cp(9,22,0,"Concept written","Quests, habits, logbook, inner weather. Clear enough to show someone.",120,true),
+     cp(0,22,40,"Prototype v2 feedback","Quests must be threads with checkpoints, not to-do lists. Keep the logbook, weather and habits.",60)]},
+   {id:2,type:"main",attrs:["body","spirit"],title:"Run a 10K",why:"Feel strong again, and prove I can finish something physical.",start:ago(84),status:"active",cps:[
+     cp(84,7,15,"First run in two years","2.5 km and I had to walk twice. Embarrassing, but I went.",30),
+     cp(70,7,0,"Two weeks of three runs a week","Legs adapting. Mornings feel calmer on running days.",180),
+     cp(56,7,30,"5K without stopping","Didn't think it would come this early. Pace 6:40.",45,true),
+     cp(42,20,0,"Shin pain, resting a week","Annoying. Swapping runs for walks and stretching.",0),
+     cp(28,7,0,"Back on the road","Started slower. No pain so far.",120),
+     cp(12,8,0,"8K long run","Last kilometre was pure stubbornness.",60,true),
+     cp(3,7,10,"Four runs this week","Race is close. Sleep is the weak point now.",210)]},
+   {id:3,type:"side",attrs:["bonds"],title:"Stay close to grandmother",why:"She will not be here forever.",start:ago(110),status:"active",cps:[
+     cp(105,18,0,"Long Sunday call","She told the story of the house again. I recorded part of it this time.",60),
+     cp(77,12,0,"Visited for the weekend","Cooked together. She corrected my spices, as always.",480,true),
+     cp(49,18,30,"Sunday call","Short. She was tired. Need to call more often, not longer.",30),
+     cp(21,18,0,"Sunday call","She asked about the running. Proud in her quiet way.",45),
+     cp(6,17,45,"Sunday call","Planned the next visit for November.",60)]},
+   {id:4,type:"side",attrs:["mind"],title:"Read 12 books this year",why:"Keep the mind fed with more than feeds.",start:ago(100),status:"active",cps:[
+     cp(95,22,0,"Finished 'Atomic Habits'","Identity first, habits second. Fits this whole project.",240,true),
+     cp(60,22,30,"Halfway through 'The Pragmatic Programmer'","Slow, but every chapter gives me one thing to try.",300),
+     cp(30,21,0,"Finished 'The Pragmatic Programmer'","Wrote a one-page summary.",180,true),
+     cp(8,23,0,"Started 'Man's Search for Meaning'","Heavy. Reading it in small doses.",120)]},
+   {id:5,type:"side",attrs:["bonds","spirit"],title:"Weekend trip with friends",why:"We keep saying 'someday'.",start:ago(15),status:"active",cps:[
+     cp(15,21,0,"Proposed it in the group chat","Three replies with thumbs up. That counts as a yes.",0),
+     cp(5,20,0,"Picked a date","Second weekend of November. Looking at places by the sea.",30)]},
+   {id:6,type:"side",attrs:["craft","bonds"],title:"Set up the new flat",why:"A home, not a place to sleep.",start:ago(118),status:"done",cps:[
+     cp(118,10,0,"Moving day","Friends helped carry everything. Pizza on the floor.",480),
+     cp(112,11,0,"Built the desk and shelves","The flat finally feels like mine.",240,true)]}],
+  habits:[
+   {id:1,good:true,name:"Morning walk",log:[ago(1),ago(2),ago(3),ago(5),ago(6)]},
+   {id:2,good:true,name:"Read 20 pages",log:[ago(1),ago(2),ago(4)]},
+   {id:3,good:true,name:"No phone in bed",log:[ago(2),ago(3)]},
+   {id:4,good:false,name:"Doomscrolling",log:[ago(1),ago(4)]},
+   {id:5,good:false,name:"Sleeping after 1am",log:[ago(3),ago(5)]}],
+  weather:{[ago(1)]:"cloudy"},
+  loop:{},
+  journal:[
+   {d:ago(1),w:"cloudy",q:"What drained you, and what fed you?",t:"Long day of meetings drained me. The evening run fed me more than I expected. Want to protect that hour."},
+   {d:ago(3),w:"clear",q:"What small thing went better than expected?",t:"Finished the concept for Compass. Seeing my life as quests already makes the week feel lighter."}],
+  pi:0
+}}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.quests)S=sample();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let toastT;function toast(m){const t=$("toast");t.textContent=m;t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),2000)}
+const fmtH=m=>m>=60?(m/60).toFixed(m%60?1:0).replace(/\.0$/,"")+"h":m+"m";
+const fmtDate=s=>parse(s).toLocaleDateString(undefined,{day:"numeric",month:"short",year:parse(s).getFullYear()===new Date().getFullYear()?undefined:"numeric"});
+const fmtTime=s=>parse(s).toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit"});
+function rel(s){const d=daysBetween(parse(s),new Date());return d<=0?"today":d===1?"yesterday":d<14?`${d} days ago`:d<60?`${Math.round(d/7)} weeks ago`:`${Math.round(d/30)} months ago`}
+
+/* points */
+function cpPoints(c){return (c.mins?Math.round(c.mins/6):2)+(c.ms?25:0)}
+function split(q,v){return q.attrs.length>1?[[q.attrs[0],v*.7],[q.attrs[1],v*.3]]:[[q.attrs[0],v]]}
+function totals(sinceDays){const since=sinceDays?new Date(Date.now()-sinceDays*864e5):null;const pts={},mins={};ATTRS.forEach(([k])=>{pts[k]=0;mins[k]=0});
+  S.quests.forEach(q=>q.cps.forEach(c=>{if(since&&parse(c.at)<since)return;split(q,cpPoints(c)).forEach(([k,v])=>pts[k]+=v);split(q,c.mins).forEach(([k,v])=>mins[k]+=v)}));return{pts,mins}}
+
+function renderLevel(){const {pts}=totals(0);const tot=Math.round(Object.values(pts).reduce((a,b)=>a+b,0));const lvl=Math.floor(tot/400)+1,into=tot%400;
+  $("lvl").textContent=lvl;$("lvlbar").style.width=(into/400*100)+"%";$("xpnote").textContent=`${into} / 400 pts to level ${lvl+1}`}
+function renderAttrs(){const {pts,mins}=totals(0);$("attrs").innerHTML=ATTRS.map(([k,n])=>{const p=Math.round(pts[k]),l=Math.floor(p/150)+1;const qs=S.quests.filter(q=>q.attrs.includes(k)&&q.status!=="done").length;
+  return `<div class="attr"><span class="sw" style="background:${AC(k)}"></span><span class="nm">${n}</span><span class="mono label">Lv ${l} · ${p} pts</span><div class="bar"><i style="width:${(p%150)/150*100}%;background:${AC(k)}"></i></div><small>${qs} active quest${qs===1?"":"s"} · ${fmtH(Math.round(mins[k]))} logged</small></div>`}).join("")}
+
+let range=90;
+function renderShare(){const {mins}=totals(range);const tot=Object.values(mins).reduce((a,b)=>a+b,0)||1;const max=Math.max(...Object.values(mins),1);
+  const rows=ATTRS.map(([k,n])=>[k,n,mins[k]]).sort((a,b)=>b[2]-a[2]);
+  $("share").innerHTML=rows.map(([k,n,m])=>`<div class="share-row"><span class="atag"><span class="sw" style="background:${AC(k)}"></span>${n}</span><div class="track"><i style="width:${m/max*100}%;background:${AC(k)}"></i></div><span class="v mono">${fmtH(Math.round(m))} · ${Math.round(m/tot*100)}%</span></div>`).join("");
+  const top=rows[0],low=rows[rows.length-1];
+  $("insight").textContent=tot>1?`${top[1]} took the most of your time${range?` in the last ${range} days`:""}. ${low[1]} got the least${low[2]?"":" (nothing logged)"}.`:"Log checkpoints to see where your time goes."}
+
+function weekStart(d){const x=new Date(d);x.setHours(0,0,0,0);const wd=(x.getDay()+6)%7;x.setDate(x.getDate()-wd);return x}
+function renderWeekly(){const W=12,ws=weekStart(new Date());const weeks=[...Array(W)].map((_,i)=>{const s=new Date(ws);s.setDate(s.getDate()-(W-1-i)*7);const o={s};ATTRS.forEach(([k])=>o[k]=0);return o});
+  S.quests.forEach(q=>q.cps.forEach(c=>{const w=weekStart(parse(c.at));const idx=weeks.findIndex(o=>o.s.getTime()===w.getTime());if(idx<0)return;split(q,c.mins).forEach(([k,v])=>weeks[idx][k]+=v/60)}));
+  const vw=300,vh=150,pl=24,pb=18,pt=6,cw=(vw-pl)/W,bw=cw-6;const tot=weeks.map(o=>ATTRS.reduce((a,[k])=>a+o[k],0));const mx=Math.max(4,Math.ceil(Math.max(...tot)/4)*4);const y=v=>pt+(vh-pt-pb)*(1-v/mx);
+  let g="";[0,mx/2,mx].forEach(t=>{g+=`<line x1="${pl}" x2="${vw}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="${t?0.5:1}"/><text x="${pl-4}" y="${y(t)+3}" text-anchor="end">${t}h</text>`});
+  weeks.forEach((o,i)=>{const x=pl+i*cw+3;let base=0;const segs=ATTRS.filter(([k])=>o[k]>0);segs.forEach(([k],j)=>{const h=(vh-pt-pb)*(o[k]/mx);const top=y(base+o[k]);const gapB=j>0?1:0;
+      g+=`<rect x="${x}" y="${top}" width="${bw}" height="${Math.max(0,h-gapB)}" fill="${AC(k)}" ${j===segs.length-1?`rx="2"`:""}/>`;base+=o[k]});
+    if(i%3===0||i===W-1)g+=`<text x="${x+bw/2}" y="${vh-4}" text-anchor="middle">${i===W-1?"now":o.s.toLocaleDateString(undefined,{day:"numeric",month:"short"})}</text>`;
+    g+=`<rect class="hit" data-w="${i}" x="${pl+i*cw}" y="0" width="${cw}" height="${vh}" fill="transparent"/>`});
+  $("weekly").innerHTML=`<svg viewBox="0 0 ${vw} ${vh}" role="img" aria-label="Stacked hours per week by attribute, last 12 weeks">${g}</svg><div class="tip" hidden></div>`;
+  const tip=$("weekly").querySelector(".tip");
+  $("weekly").querySelectorAll(".hit").forEach(r=>{r.addEventListener("mouseenter",()=>{const o=weeks[r.dataset.w];const rows=ATTRS.filter(([k])=>o[k]>0);
+      tip.innerHTML=`<b>Week of ${o.s.toLocaleDateString(undefined,{day:"numeric",month:"short"})}</b>`+(rows.length?rows.map(([k,n])=>`<div><span><span class="sw" style="background:${AC(k)}"></span>${n}</span><span class="mono">${o[k].toFixed(1)}h</span></div>`).join(""):"<div>Nothing logged</div>");
+      const box=$("weekly").getBoundingClientRect(),rb=r.getBoundingClientRect();tip.hidden=false;tip.style.left=Math.min(Math.max(rb.left-box.left+rb.width/2,70),box.width-70)+"px";tip.style.top=(rb.top-box.top+8)+"px"});
+    r.addEventListener("mouseleave",()=>tip.hidden=true)})}
+$("range").onclick=e=>{const b=e.target.closest("button");if(!b)return;range=+b.dataset.r;[...$("range").children].forEach(x=>x.setAttribute("aria-pressed",x===b));renderShare()};
+
+/* quests */
+let qf="active",open=null;
+function pulse(q){const ws=weekStart(new Date());const n=16,c=Array(n).fill(0);q.cps.forEach(cp=>{const w=Math.round((ws-weekStart(parse(cp.at)))/(7*864e5));if(w>=0&&w<n)c[n-1-w]+=cp.ms?2:1});
+  return `<div class="pulse" title="Checkpoints per week, last 16 weeks">${c.map(v=>`<i class="${v>1?"on2":v?"on1":""}"></i>`).join("")}</div>`}
+const atags=q=>q.attrs.map(k=>`<span class="atag"><span class="sw" style="background:${AC(k)}"></span>${AN(k)}</span>`).join("");
+const sorted=q=>[...q.cps].sort((a,b)=>b.at.localeCompare(a.at));
+function renderQuests(){if(open!=null)return renderThread();
+  const list=S.quests.filter(q=>qf==="active"?q.status!=="done":qf==="done"?q.status==="done":q.type===qf&&q.status!=="done")
+    .sort((a,b)=>(a.type==="main"?0:1)-(b.type==="main"?0:1)||((sorted(b)[0]?.at||"")).localeCompare(sorted(a)[0]?.at||""));
+  $("qpanel").innerHTML=`<div class="panel-h"><h2>Quest threads</h2><div class="qfilter" id="qfilter">${[["active","Active"],["main","Main"],["side","Side"],["done","Completed"]].map(([f,n])=>`<button aria-pressed="${qf===f}" data-f="${f}">${n}</button>`).join("")}</div></div>
+  <div class="qlist">${list.length?list.map(q=>{const last=sorted(q)[0];const days=daysBetween(parse(q.start),new Date());
+    return `<button class="qrow ${q.type}" data-open="${q.id}"><h3>${esc(q.title)}</h3><span class="chip ${q.status==="active"?q.type:q.status}">${q.status==="active"?q.type+" quest":q.status}</span>
+    <div class="meta">${atags(q)}<span>Day ${days+1}</span><span>${q.cps.length} checkpoint${q.cps.length===1?"":"s"}</span>${last?`<span>Last: ${esc(last.title)}, ${rel(last.at)}</span>`:""}</div>${pulse(q)}</button>`}).join(""):`<p style="color:var(--muted);margin:0">No quests here yet.</p>`}</div>
+  <form class="addq" id="addq"><div class="label">Begin a new quest</div>
+    <input type="text" id="nq-title" placeholder="Quest name, e.g. Learn to cook for friends" aria-label="Quest name">
+    <input type="text" id="nq-why" placeholder="Why it matters (optional)" aria-label="Why it matters">
+    <div class="row"><select id="nq-type" aria-label="Quest type"><option value="side">Side quest</option><option value="main">Main quest</option></select>
+    <select id="nq-a1" aria-label="Primary attribute">${ATTRS.map(a=>`<option value="${a[0]}">${a[1]}</option>`).join("")}</select>
+    <select id="nq-a2" aria-label="Secondary attribute"><option value="">No second attribute</option>${ATTRS.map(a=>`<option value="${a[0]}">+ ${a[1]}</option>`).join("")}</select>
+    <button class="btn" type="submit">Begin quest</button></div></form>`}
+$("qpanel").addEventListener("click",e=>{const f=e.target.closest("[data-f]");if(f){qf=f.dataset.f;renderQuests();return}
+  const o=e.target.closest("[data-open]");if(o){open=+o.dataset.open;renderQuests();$("qpanel").scrollIntoView({block:"start",behavior:"smooth"});return}
+  if(e.target.closest("#back")){open=null;renderQuests();return}
+  const st=e.target.closest("[data-status]");if(st){const q=S.quests.find(x=>x.id===open);q.status=st.dataset.status;save();toast(q.status==="done"?"Quest completed. A chapter of its own.":q.status==="paused"?"Quest paused":"Quest resumed");renderQuests();return}
+  const del=e.target.closest("[data-del]");if(del){if(del.dataset.armed){const q=S.quests.find(x=>x.id===open);q.cps=q.cps.filter(c=>c.id!=del.dataset.del);save();renderAll()}else{del.dataset.armed=1;del.textContent="Click again to remove"}}});
+$("qpanel").addEventListener("submit",e=>{e.preventDefault();
+  if(e.target.id==="addq"){const t=$("nq-title").value.trim();if(!t){$("nq-title").focus();return}const a1=$("nq-a1").value,a2=$("nq-a2").value;
+    const q={id:Date.now(),type:$("nq-type").value,attrs:a2&&a2!==a1?[a1,a2]:[a1],title:t,why:$("nq-why").value.trim(),start:TODAY,status:"active",cps:[]};S.quests.unshift(q);save();open=q.id;renderQuests();toast("Quest begun. Log the first checkpoint.")}
+  if(e.target.id==="cpform"){const q=S.quests.find(x=>x.id===open);const title=$("cp-title").value.trim();if(!title){$("cp-title").focus();return}
+    const c={id:Date.now(),at:$("cp-at").value||dtstr(new Date()),title,note:$("cp-note").value.trim(),mins:+$("cp-mins").value,ms:$("cp-ms").checked};
+    q.cps.push(c);if(q.status==="paused")q.status="active";save();markLoop("play");const g=split(q,cpPoints(c)).map(([k,v])=>`+${Math.round(v)} ${AN(k)}`).join(", ");toast(`Checkpoint logged · ${g}`);renderAll()}});
+$("qpanel").addEventListener("input",e=>{if(["cp-mins","cp-ms"].includes(e.target.id))updPreview()});
+function updPreview(){const q=S.quests.find(x=>x.id===open);if(!q||!$("cp-prev"))return;const c={mins:+$("cp-mins").value,ms:$("cp-ms").checked};$("cp-prev").textContent="Earns "+split(q,cpPoints(c)).map(([k,v])=>`${Math.round(v)} ${AN(k)}`).join(" and ")}
+
+function renderThread(){const q=S.quests.find(x=>x.id===open);if(!q){open=null;return renderQuests()}
+  const cps=sorted(q);const mins=q.cps.reduce((a,c)=>a+c.mins,0),pts=Math.round(q.cps.reduce((a,c)=>a+cpPoints(c),0));const days=daysBetween(parse(q.start),new Date())+1;
+  let tl="";cps.forEach((c,i)=>{const prev=cps[i+1];const g=split(q,cpPoints(c)).map(([k,v])=>`<span class="atag"><span class="sw" style="background:${AC(k)}"></span>+${Math.round(v)} ${AN(k)}</span>`).join("");
+    tl+=`<li class="cp${c.ms?" ms":""}"><div class="rail"><span class="dot"></span></div><div class="body"><div class="when"><span>${fmtDate(c.at)} · ${fmtTime(c.at)}</span><span>${rel(c.at)}</span>${c.ms?`<span style="color:var(--brass)">Milestone</span>`:""}</div>
+    <h4>${esc(c.title)}</h4>${c.note?`<p>${esc(c.note)}</p>`:""}<div class="gain">${c.mins?`<span class="mono">${fmtH(c.mins)}</span>`:""}${g}<button class="link" data-del="${c.id}">Remove</button></div>
+    ${prev?`<div class="gap">${(()=>{const d=daysBetween(parse(prev.at),parse(c.at));return d>0?`${d}-day gap`:"same day"})()}</div>`:""}</div></li>`});
+  $("qpanel").innerHTML=`<div class="thread"><div><button class="link" id="back">← All quests</button></div>
+  <div class="thead"><div style="display:flex;gap:10px;justify-content:space-between;align-items:start"><h2>${esc(q.title)}</h2><span class="chip ${q.status==="active"?q.type:q.status}">${q.status==="active"?q.type+" quest":q.status}</span></div>
+  ${q.why?`<p class="why">${esc(q.why)}</p>`:""}<div style="display:flex;gap:14px;flex-wrap:wrap">${atags(q)}</div></div>
+  <div class="stats"><div class="stat"><span class="label">Started</span><b>${fmtDate(q.start)}</b></div><div class="stat"><span class="label">Running</span><b>${days} days</b></div><div class="stat"><span class="label">Checkpoints</span><b>${q.cps.length}</b></div><div class="stat"><span class="label">Time</span><b>${fmtH(mins)}</b></div><div class="stat"><span class="label">Points</span><b>${pts}</b></div></div>
+  ${q.status!=="done"?`<form class="cpform" id="cpform"><div class="label">Log a checkpoint</div>
+    <input type="text" id="cp-title" placeholder="What happened? e.g. Ran 8K without stopping" aria-label="Checkpoint title">
+    <textarea id="cp-note" placeholder="Commentary: how it went, what you noticed, what's next" aria-label="Commentary"></textarea>
+    <div class="row"><input type="datetime-local" id="cp-at" value="${dtstr(new Date())}" aria-label="Date and time">
+    <select id="cp-mins" aria-label="Time spent">${TIMES.map(([v,n])=>`<option value="${v}" ${v===60?"selected":""}>${n}</option>`).join("")}</select>
+    <label class="ms"><input type="checkbox" id="cp-ms"> Milestone</label></div>
+    <div class="row" style="justify-content:space-between"><span class="preview" id="cp-prev"></span><button class="btn" type="submit">Log checkpoint</button></div></form>`:""}
+  <div class="actions">${q.status==="active"?`<button class="btn ghost" data-status="paused">Pause quest</button><button class="btn ghost" data-status="done">Complete quest</button>`:`<button class="btn ghost" data-status="active">${q.status==="done"?"Reopen":"Resume"} quest</button>`}</div>
+  <div><div class="label" style="margin-bottom:10px">The thread so far</div>${cps.length?`<ol class="timeline">${tl}</ol>`:`<p style="color:var(--muted);margin:0">No checkpoints yet. Log the first one above.</p>`}</div></div>`;
+  updPreview()}
+
+/* today, habits, journal */
+function markLoop(k){if(!S.loop[TODAY])S.loop[TODAY]={};if(!S.loop[TODAY][k]){S.loop[TODAY][k]=true;save();renderLoop()}}
+function renderLoop(){const L=S.loop[TODAY]||{};const steps=[["checkin","Morning check-in","Set your inner weather below"],["play","Move a thread","Log a checkpoint on any quest"],["log","Evening logbook","Write one entry"]];
+  $("loop").innerHTML=steps.map(([k,t,s],i)=>`<div class="loopstep${L[k]?" done":""}"><span class="n">${L[k]?"✓":i+1}</span><div>${t}<small>${s}</small></div></div>`).join("");
+  $("today").textContent=new Date().toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"})}
+function renderWeather(){$("weather").innerHTML=WEATHER.map(([k,n,svg])=>`<button aria-pressed="${S.weather[TODAY]===k}" data-w="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${svg}</svg>${n}</button>`).join("")}
+$("weather").onclick=e=>{const b=e.target.closest("button");if(!b)return;S.weather[TODAY]=b.dataset.w;save();renderWeather();markLoop("checkin");toast("Weather logged: "+b.textContent.trim())};
+function renderHabits(){const days=[6,5,4,3,2,1,0].map(ago);const row=h=>{const on=h.log.includes(TODAY);let streak=0;for(let i=0;i<400;i++){if(h.log.includes(ago(i)))streak++;else if(i>0)break}
+  return `<div class="habit${h.good?"":" bad"}"><div class="nm">${esc(h.name)} <small>${h.good?(streak?`· ${streak}-day streak`:""):`· ${7-days.filter(d=>h.log.includes(d)).length} clean days of 7`}</small></div>
+  <button class="tick" data-h="${h.id}" aria-pressed="${on}" aria-label="${h.good?"Done today":"Slipped today"}: ${esc(h.name)}">${on?(h.good?"✓":"✕"):""}</button>
+  <div class="dots" aria-hidden="true">${days.map(d=>`<i class="${h.log.includes(d)?"y":""}"></i>`).join("")}</div></div>`};
+  $("habits").innerHTML=`<div class="label">Keep</div>${S.habits.filter(h=>h.good).map(row).join("")}<div class="label">Starve</div>${S.habits.filter(h=>!h.good).map(row).join("")}`}
+$("habits").onclick=e=>{const b=e.target.closest("button[data-h]");if(!b)return;const h=S.habits.find(x=>x.id==b.dataset.h);const i=h.log.indexOf(TODAY);
+  if(i<0){h.log.push(TODAY);if(!h.good)toast("Logged. Tomorrow is a clean page.")}else h.log.splice(i,1);save();renderHabits()};
+function renderJournal(){$("prompt").textContent=PROMPTS[S.pi%PROMPTS.length];
+  $("entries").innerHTML=S.journal.map(j=>{const w=WEATHER.find(x=>x[0]===j.w);return `<div class="entry"><div class="meta"><span class="mono">${j.d}</span>${w?`<span>${w[1]}</span>`:""}</div><div style="color:var(--muted);font-size:12px">${esc(j.q)}</div><p>${esc(j.t)}</p></div>`}).join("")}
+$("newprompt").onclick=()=>{S.pi++;save();renderJournal()};
+$("jform").onsubmit=e=>{e.preventDefault();const t=$("jtext").value.trim();if(!t)return;S.journal.unshift({d:TODAY,w:S.weather[TODAY]||"",q:PROMPTS[S.pi%PROMPTS.length],t});$("jtext").value="";S.pi++;save();renderJournal();markLoop("log");toast("Logged")};
+
+$("north").addEventListener("blur",()=>{S.north=$("north").textContent.trim();save()});
+document.querySelector(".tabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));$("board").hidden=b.dataset.tab!=="board";$("codex").hidden=b.dataset.tab!=="codex"};
+$("reset").onclick=()=>{S=sample();open=null;save();renderAll();toast("Sample restored")};
+
+function renderAll(){$("chapter").textContent=S.chapter;$("north").textContent=S.north;renderLevel();renderAttrs();renderShare();renderWeekly();renderQuests();renderLoop();renderWeather();renderHabits();renderJournal()}
+if(location.hash==="#codex")document.querySelector('[data-tab="codex"]').click();
+renderAll();
+</script>
