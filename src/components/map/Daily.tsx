@@ -7,6 +7,7 @@ import { dismissUnlock } from "@/lib/actions/profile";
 import { WEATHERS, WEATHER_NAMES } from "@/lib/game/types";
 import type { MapView } from "@/lib/view";
 import { WeatherIcon } from "../bits";
+import { Decode } from "../fx";
 import { useAction } from "../Toast";
 
 const STEPS = [
@@ -26,7 +27,9 @@ export function TodayPanel({ loop, weather, todayLabel }: Pick<MapView, "loop" |
       <div className="loop">
         {STEPS.map(([key, title, sub], i) => (
           <div key={key} className={`loopstep${loop[key] ? " done" : ""}`} data-testid={`loop-${key}`} data-done={loop[key]}>
-            <span className="n">{loop[key] ? "✓" : i + 1}</span>
+            <span className="n">
+              <span>{loop[key] ? "✓" : i + 1}</span>
+            </span>
             <div>
               {title}
               <small>{sub}</small>
@@ -159,7 +162,7 @@ export function Logbook({ journal }: { journal: MapView["journal"] }) {
                 <span className="mono">{j.day}</span>
                 {j.weather && <span>{WEATHER_NAMES[j.weather]}</span>}
               </div>
-              {j.prompt && <div style={{ color: "var(--muted)", fontSize: 12 }}>{j.prompt}</div>}
+              {j.prompt && <div className="q">{j.prompt}</div>}
               <p>{j.body}</p>
             </div>
           ))}
@@ -178,7 +181,9 @@ export function UnlockCards({ fresh }: { fresh: MapView["fresh"] }) {
         <div className="unlock" key={u.feature} role="status">
           <div>
             <span className="label">Unlocked</span>
-            <h3>{u.title}</h3>
+            <h3>
+              <Decode text={u.title} />
+            </h3>
             <p>{u.body}</p>
           </div>
           <div style={{ display: "flex", gap: 8 }}>

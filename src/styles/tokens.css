@@ -1,25 +1,72 @@
-/* Theme tokens ported from docs/prototype/compass.html. Components use only these. */
-:root {
-  --bg: #e9eeec; --panel: #f7f9f8; --ink: #1b2a2f; --muted: #5d6f72; --line: #cfd8d6;
-  --accent: #2a6f73; --brass: #a5731c; --brass-soft: #f1e3c4;
-  --good: #2f7d4f; --bad: #b0443a;
-  --a-body: #2a78d6; --a-mind: #eb6834; --a-bonds: #1baf7a; --a-craft: #eda100; --a-spirit: #e87ba4;
-  --display: var(--font-display), Georgia, serif;
-  --body: var(--font-body), system-ui, sans-serif;
-  --mono: var(--font-mono), ui-monospace, monospace;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #111a1d; --panel: #18242a; --ink: #e3ebe9; --muted: #93a6a8; --line: #2b3b41;
-    --accent: #5fb3b3; --brass: #d9a54a; --brass-soft: #3a2f1a; --good: #5cbf83; --bad: #e2766b;
-    --a-body: #3987e5; --a-mind: #d95926; --a-bonds: #199e70; --a-craft: #c98500; --a-spirit: #d55181;
-    color-scheme: dark;
-  }
-}
+/*
+ * Theme tokens. Components use only these.
+ * "Night City" (dark) is the default; "Daylight" applies with data-theme="light"
+ * (chosen in Settings, remembered per device).
+ */
+:root,
 :root[data-theme="dark"] {
-  --bg: #111a1d; --panel: #18242a; --ink: #e3ebe9; --muted: #93a6a8; --line: #2b3b41;
-  --accent: #5fb3b3; --brass: #d9a54a; --brass-soft: #3a2f1a; --good: #5cbf83; --bad: #e2766b;
-  --a-body: #3987e5; --a-mind: #d95926; --a-bonds: #199e70; --a-craft: #c98500; --a-spirit: #d55181;
+  --bg: #07090d;
+  --bg-2: #0c1016;
+  --panel: #0e131a;
+  --panel-2: #131a23;
+  --ink: #e6f6f7;
+  --muted: #7d939b;
+  --line: #22303a;
+  --label: #ff5f6d;
+
+  --accent: #5ef6ff; /* cyan: focus, selection, side quests */
+  --red: #ff2a4d; /* chrome: headings, brackets, primary buttons */
+  --brass: #fcee0a; /* yellow: main quests, level, milestones */
+  --brass-soft: #2b2806;
+  --good: #1ded83;
+  --bad: #ff2a4d;
+
+  --a-body: #ff6b3d;
+  --a-mind: #b57cff;
+  --a-bonds: #1ded83;
+  --a-craft: #ffc21a;
+  --a-spirit: #ff4fd8;
+
+  --grid: rgba(94, 246, 255, 0.05);
+  --scan: rgba(0, 0, 0, 0.22);
+  --glow-accent: rgba(94, 246, 255, 0.45);
+  --glow-red: rgba(255, 42, 77, 0.5);
+  --glow-brass: rgba(252, 238, 10, 0.45);
+
+  --brand: var(--font-brand), "Orbitron", sans-serif;
+  --display: var(--font-display), "Rajdhani", sans-serif;
+  --body: var(--font-display), "Rajdhani", system-ui, sans-serif;
+  --mono: var(--font-mono), "Share Tech Mono", ui-monospace, monospace;
   color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #e8ebee;
+  --bg-2: #dde2e6;
+  --panel: #f6f7f8;
+  --panel-2: #eef1f3;
+  --ink: #0b1016;
+  --muted: #56636c;
+  --line: #c3ccd3;
+  --label: #c4002b;
+
+  --accent: #007c89;
+  --red: #d4002c;
+  --brass: #8a7d00;
+  --brass-soft: #f3efc2;
+  --good: #0a8a4c;
+  --bad: #d4002c;
+
+  --a-body: #d9481a;
+  --a-mind: #7b3fe0;
+  --a-bonds: #0a9a5a;
+  --a-craft: #b88500;
+  --a-spirit: #c2259f;
+
+  --grid: rgba(0, 124, 137, 0.07);
+  --scan: rgba(0, 0, 0, 0.035);
+  --glow-accent: rgba(0, 124, 137, 0.16);
+  --glow-red: rgba(212, 0, 44, 0.16);
+  --glow-brass: rgba(138, 125, 0, 0.18);
+  color-scheme: light;
 }

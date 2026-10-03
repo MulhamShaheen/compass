@@ -27,9 +27,13 @@ function Pulse({ counts }: { counts: number[] }) {
   );
 }
 
-function QuestRow({ q }: { q: QuestRowView }) {
+function QuestRow({ q, index }: { q: QuestRowView; index: number }) {
   return (
-    <Link href={`/quests/${q.id}`} className={`qrow ${q.type}`} style={{ textDecoration: "none" }}>
+    <Link
+      href={`/quests/${q.id}`}
+      className={`qrow ${q.type}`}
+      style={{ textDecoration: "none", "--k": index } as React.CSSProperties}
+    >
       <h3>{q.title}</h3>
       <Chip type={q.type} status={q.status} />
       <div className="meta">
@@ -81,7 +85,7 @@ export function QuestPanel({
         </div>
       </div>
       <div className="qlist">
-        {list.length ? list.map((q) => <QuestRow key={q.id} q={q} />) : <p className="empty">No quests here yet.</p>}
+        {list.length ? list.map((q, i) => <QuestRow key={q.id} q={q} index={i} />) : <p className="empty">No quests here yet.</p>}
       </div>
       <p className="slotnote">
         Slots: main {slots.main.used} of {slots.main.max}

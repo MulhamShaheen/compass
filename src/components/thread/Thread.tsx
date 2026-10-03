@@ -120,12 +120,12 @@ function EditCheckpoint({ item, quest, onDone }: { item: TimelineItem; quest: Qu
   );
 }
 
-function TimelineEntry({ item, quest }: { item: TimelineItem; quest: QuestAttrs }) {
+function TimelineEntry({ item, quest, index }: { item: TimelineItem; quest: QuestAttrs; index: number }) {
   const { go, pending } = useAction();
   const [editing, setEditing] = useState(false);
   const [armed, setArmed] = useState(false);
   return (
-    <li className={`cp${item.isMilestone ? " ms" : ""}`}>
+    <li className={`cp${item.isMilestone ? " ms" : ""}`} style={{ "--k": Math.min(index, 12) } as React.CSSProperties}>
       <div className="rail">
         <span className="dot" />
       </div>
@@ -174,8 +174,8 @@ export function Timeline({ items, quest }: { items: TimelineItem[]; quest: Quest
   if (!items.length) return <p className="empty">No checkpoints yet. Log the first one above.</p>;
   return (
     <ol className="timeline">
-      {items.map((item) => (
-        <TimelineEntry key={item.id} item={item} quest={quest} />
+      {items.map((item, i) => (
+        <TimelineEntry key={item.id} item={item} quest={quest} index={i} />
       ))}
     </ol>
   );

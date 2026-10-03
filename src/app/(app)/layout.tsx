@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { BootScreen } from "@/components/bits";
 import { DevBar } from "@/components/DevBar";
 import { Header, Nav } from "@/components/Header";
 import { readDb } from "@/lib/db/local-store";
@@ -12,6 +13,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const header = buildHeader(db);
   return (
     <div className="wrap">
+      <BootScreen name={header.name} level={header.level.level} day={header.dayNumber} />
       <Header view={header} />
       <Nav reviewUnlocked={header.reviewUnlocked} />
       {children}

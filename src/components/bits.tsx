@@ -3,7 +3,7 @@ import { ATTRIBUTE_NAMES, type Attribute, type Weather } from "@/lib/game/types"
 export const attrColor = (a: Attribute) => `var(--a-${a})`;
 
 export function Swatch({ attr }: { attr: Attribute }) {
-  return <span className="sw" style={{ background: attrColor(attr) }} />;
+  return <span className="sw" style={{ background: attrColor(attr), color: attrColor(attr) }} />;
 }
 
 export function AttrTag({ attr, children }: { attr: Attribute; children?: React.ReactNode }) {
@@ -18,11 +18,14 @@ export function AttrTag({ attr, children }: { attr: Attribute; children?: React.
 export function Rose({ className = "rose" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 48 48" aria-hidden="true">
-      <circle cx="24" cy="24" r="22" fill="none" stroke="var(--line)" strokeWidth="1.5" />
-      <path d="M24 4 L28 24 L24 44 L20 24Z" fill="var(--brass)" />
-      <path d="M24 4 L28 24 L20 24Z" fill="var(--ink)" />
-      <path d="M4 24 L24 21 L44 24 L24 27Z" fill="var(--muted)" opacity=".5" />
-      <circle cx="24" cy="24" r="2.5" fill="var(--panel)" stroke="var(--ink)" />
+      <circle className="ring" cx="24" cy="24" r="22" fill="none" stroke="var(--accent)" strokeWidth="1" strokeDasharray="5 3" opacity=".7" />
+      <circle cx="24" cy="24" r="17" fill="none" stroke="var(--line)" strokeWidth="1" />
+      <g className="needle">
+        <path d="M24 5 L28 24 L24 43 L20 24Z" fill="var(--red)" />
+        <path d="M24 5 L28 24 L20 24Z" fill="var(--brass)" />
+      </g>
+      <path d="M6 24 L24 21.5 L42 24 L24 26.5Z" fill="var(--muted)" opacity=".45" />
+      <circle cx="24" cy="24" r="2.5" fill="var(--bg)" stroke="var(--accent)" />
     </svg>
   );
 }
@@ -72,4 +75,32 @@ export function Chip({ type, status }: { type: "main" | "side" | "system"; statu
   if (type === "system") return <span className="chip">Prologue</span>;
   const cls = status === "active" ? type : status;
   return <span className={`chip ${cls}`}>{status === "active" ? `${type} quest` : status}</span>;
+}
+
+/**
+ * Plays once per full page load: client navigations keep the layout mounted,
+ * so it does not replay. Pointer events pass through, and reduced motion hides it.
+ */
+export function BootScreen({ name, level, day }: { name: string | null; level: number; day: number }) {
+  const lines = [
+    "Linking character profile",
+    `Loading ${name ? name : "character"} · level ${level}`,
+    "Syncing quest threads",
+    `Calibrating True North · day ${day}`,
+  ];
+  return (
+    <div className="boot" aria-hidden="true">
+      <div className="boot-inner">
+        <div className="brandline">Compass</div>
+        {lines.map((l, i) => (
+          <div className="ln" key={l} style={{ "--i": i } as React.CSSProperties}>
+            {l} ··· <b>OK</b>
+          </div>
+        ))}
+        <div className="boot-bar">
+          <i />
+        </div>
+      </div>
+    </div>
+  );
 }
