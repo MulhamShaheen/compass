@@ -5,7 +5,15 @@ Compass is a personal, gamified life dashboard: quests are long-running threads 
 ## Read first
 - `docs/PRODUCT.md`: what we are building and why (concepts, points rules, onboarding, calendar).
 - `docs/IMPLEMENTATION_PLAN.md`: stack, data model, milestones M0 to M8 with acceptance criteria.
-- `docs/prototype/compass.html`: the clickable visual reference. Match its layout, tokens, copy tone and behaviour.
+- `docs/prototype/compass.html`: the original clickable reference. Still the reference for layout, copy tone and behaviour, but no longer for the look.
+
+## Visual style
+The app looks like a game character menu (Cyberpunk 2077 style HUD), not like the prototype:
+- Neon on near-black ("Night City", default) with a light "Daylight" variant. Tokens in `src/styles/tokens.css`; red for chrome and headings, cyan (`--accent`) for focus and selection, yellow (`--brass`) for main quests, level and milestones.
+- Fonts: Orbitron (brand, numbers), Rajdhani (text), Share Tech Mono (labels, data).
+- Angular panels with cut corners and corner brackets, uppercase headings with a `//` prefix, segmented bars.
+- Motion lives in `src/app/globals.css` and `src/components/fx.tsx` (decode text, count-up numbers, level-up, boot screen). Everything must still work with `prefers-reduced-motion: reduce`, where all animation is off.
+- Decorative CSS text (`content:`) must use empty alt text (`content: "// " / ""`) so it stays out of accessible names.
 
 ## How to work
 - Build milestone by milestone, in order. Don't start a milestone before the previous one's "Done when" is met.
@@ -25,3 +33,13 @@ Compass is a personal, gamified life dashboard: quests are long-running threads 
 
 ## Copy tone
 Plain, warm, and short. No exclamation marks, guilt or streak shaming. For example: "Tomorrow is a clean page." and "Log the first checkpoint above."
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

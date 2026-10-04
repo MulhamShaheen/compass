@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&/<>[]=+*";
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -10,19 +10,21 @@ const reducedMotion = () => typeof window !== "undefined" && window.matchMedia("
  * The real text is always available to assistive tech; the animation is aria-hidden.
  */
 export function Decode({ text, duration = 650 }: { text: string; duration?: number }) {
-  const [out, setOut] = useState(text);
+  // null means "settled": show the real text. Only animation frames set it.
+  const [scrambled, setScrambled] = useState<string | null>(null);
   useEffect(() => {
-    if (reducedMotion()) {
-      setOut(text);
-      return;
-    }
+    if (reducedMotion()) return;
     let raf = 0;
     const start = performance.now();
     const tick = (t: number) => {
       const p = Math.min(1, (t - start) / duration);
       const n = Math.floor(p * text.length);
-      setOut(text.slice(0, n) + text.slice(n).replace(/\S/g, () => GLYPHS[(Math.random() * GLYPHS.length) | 0]));
-      if (p < 1) raf = requestAnimationFrame(tick);
+      if (p < 1) {
+        setScrambled(text.slice(0, n) + text.slice(n).replace(/\S/g, () => GLYPHS[(Math.random() * GLYPHS.length) | 0]));
+        raf = requestAnimationFrame(tick);
+      } else {
+        setScrambled(null);
+      }
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
@@ -30,7 +32,7 @@ export function Decode({ text, duration = 650 }: { text: string; duration?: numb
   return (
     <>
       <span className="decode" aria-hidden="true">
-        {out}
+        {scrambled ?? text}
       </span>
       <span className="sr-only">{text}</span>
     </>
@@ -39,29 +41,30 @@ export function Decode({ text, duration = 650 }: { text: string; duration?: numb
 
 /** A number that counts toward its new value when it changes (not on first render). */
 export function Num({ value, testId, className }: { value: number; testId?: string; className?: string }) {
-  const [shown, setShown] = useState(value);
+  // null means "settled": show the real value. Only animation frames set it.
+  const [counting, setCounting] = useState<number | null>(null);
   const from = useRef(value);
   useEffect(() => {
     const start = from.current;
     from.current = value;
-    if (start === value || reducedMotion()) {
-      setShown(value);
-      return;
-    }
+    if (start === value || reducedMotion()) return;
     let raf = 0;
     const t0 = performance.now();
     const tick = (t: number) => {
       const p = Math.min(1, (t - t0) / 700);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setShown(Math.round(start + (value - start) * eased));
-      if (p < 1) raf = requestAnimationFrame(tick);
+      if (p < 1) {
+        setCounting(Math.round(start + (value - start) * (1 - Math.pow(1 - p, 3))));
+        raf = requestAnimationFrame(tick);
+      } else {
+        setCounting(null);
+      }
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [value]);
   return (
     <span className={className} data-testid={testId}>
-      {shown}
+      {counting ?? value}
     </span>
   );
 }
@@ -104,25 +107,34 @@ const THEMES = [
   { key: "light", name: "Daylight", note: "Same HUD, light background." },
 ] as const;
 
+type Theme = "dark" | "light";
+
+function readTheme(): Theme {
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
+
+function subscribeTheme(onChange: () => void) {
+  const observer = new MutationObserver(onChange);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  return () => observer.disconnect();
+}
+
+function applyTheme(t: Theme) {
+  document.documentElement.dataset.theme = t;
+  try {
+    localStorage.setItem("compass-theme", t);
+  } catch {
+    /* storage may be blocked; the choice still applies for this visit */
+  }
+}
+
 /** Appearance is a per-device preference, stored in this browser only. */
 export function ThemePicker() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  useEffect(() => {
-    setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark");
-  }, []);
-  const choose = (t: "dark" | "light") => {
-    document.documentElement.dataset.theme = t;
-    try {
-      localStorage.setItem("compass-theme", t);
-    } catch {
-      /* storage may be blocked; the choice still applies for this visit */
-    }
-    setTheme(t);
-  };
+  const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "dark" as Theme);
   return (
     <div className="themes" role="group" aria-label="Appearance">
       {THEMES.map((t) => (
-        <button key={t.key} type="button" aria-pressed={theme === t.key} onClick={() => choose(t.key)}>
+        <button key={t.key} type="button" aria-pressed={theme === t.key} onClick={() => applyTheme(t.key)}>
           <b>{t.name}</b>
           <small>{t.note}</small>
         </button>
@@ -130,4 +142,3 @@ export function ThemePicker() {
     </div>
   );
 }
-

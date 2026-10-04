@@ -721,3 +721,7 @@ header::after {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .boot, .xp-pop { display: none; }
 }
+
+/* ---------- sign in ---------- */
+.login .rose { width: 56px; height: 56px; }
+.login input[type="text"] { max-width: 420px; }

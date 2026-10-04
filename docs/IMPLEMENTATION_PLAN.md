@@ -7,7 +7,7 @@ Companion to [PRODUCT.md](PRODUCT.md). The plan is written to be executed step b
 | Area | Choice | Why |
 |---|---|---|
 | Platform | **Phone-friendly web app (PWA)** | One codebase, works on phone and desktop, installable to the home screen. |
-| Framework | **Next.js 15 (App Router) + TypeScript (strict)** | Server actions remove most API boilerplate; easy deploy. |
+| Framework | **Next.js 16 (App Router) + TypeScript (strict)** | Server actions remove most API boilerplate; easy deploy. Moved from 15 to 16 for a security fix in the bundled PostCSS. |
 | Styling | **Tailwind CSS v4** with CSS variables for theme tokens | Port the prototype's tokens directly (light/dark). |
 | Fonts | Young Serif (display), IBM Plex Sans (body), IBM Plex Mono (data) via `next/font/google` | Matches prototype. |
 | Data + auth | **Supabase** (Postgres, Auth with email magic link + Google, Row Level Security) | Hosted Postgres, auth and RLS in one; free tier is enough. |
@@ -232,7 +232,7 @@ Each milestone ends with: tests green, lint and typecheck clean, deployed previe
 - Next.js + TS strict + Tailwind + ESLint + Prettier + Vitest + Playwright.
 - Supabase project, CLI, first migration (`profiles`), generated types script (`npm run db:types`).
 - `styles/tokens.css` ported from `docs/prototype/compass.html` (light and dark, attribute colors).
-- Auth: magic link + Google; middleware protects `(app)` routes; profile row created on first sign in.
+- Auth: magic link + Google (Google deferred); `src/proxy.ts` (Next 16's name for middleware) refreshes the session and protects app routes; profile row created on first sign in.
 - **Done when:** you can sign in on a deployed preview and see an empty shell with header and theme.
 
 ### M1: Game logic library
@@ -302,7 +302,7 @@ Each milestone ends with: tests green, lint and typecheck clean, deployed previe
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=   # the sb_publishable_… key (formerly the anon key)
 SUPABASE_SERVICE_ROLE_KEY=        # server only (cron sync)
 GOOGLE_CLIENT_ID=                 # v1.1
 GOOGLE_CLIENT_SECRET=             # v1.1

@@ -4,14 +4,14 @@ import { CharacterPanel } from "@/components/map/CharacterPanel";
 import { HabitsPanel, Logbook, TodayPanel, UnlockCards } from "@/components/map/Daily";
 import { QuestPanel } from "@/components/map/QuestPanel";
 import { WhereLifeGoes } from "@/components/map/WhereLifeGoes";
-import { readDb } from "@/lib/db/local-store";
+import { loadDbOrLogin } from "@/lib/db/store";
 import { buildMap } from "@/lib/view";
 
 export const dynamic = "force-dynamic";
 
 /** The map: the dashboard. Sections stay locked until play opens them. */
-export default function MapPage() {
-  const view = buildMap(readDb());
+export default async function MapPage() {
+  const view = buildMap(await loadDbOrLogin());
   const { unlocked, hints } = view;
   const quiet = view.header.quietMode;
   const showLeft = !quiet;

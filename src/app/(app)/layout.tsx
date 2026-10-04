@@ -2,13 +2,13 @@ import { redirect } from "next/navigation";
 import { BootScreen } from "@/components/bits";
 import { DevBar } from "@/components/DevBar";
 import { Header, Nav } from "@/components/Header";
-import { readDb } from "@/lib/db/local-store";
+import { loadDbOrLogin } from "@/lib/db/store";
 import { buildHeader } from "@/lib/view";
 
 export const dynamic = "force-dynamic";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const db = readDb();
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const db = await loadDbOrLogin();
   if (!db.profile?.prologueCompletedAt) redirect("/prologue");
   const header = buildHeader(db);
   return (

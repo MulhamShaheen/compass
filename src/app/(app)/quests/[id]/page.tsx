@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import { AttrTag, Chip } from "@/components/bits";
 import { CheckpointForm, EditQuest, QuestActions, Timeline } from "@/components/thread/Thread";
 import { formatMinutes } from "@/lib/copy";
-import { readDb } from "@/lib/db/local-store";
+import { loadDbOrLogin } from "@/lib/db/store";
 import { buildThread } from "@/lib/view";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuestPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const view = buildThread(readDb(), id);
+  const view = buildThread(await loadDbOrLogin(), id);
   if (!view) notFound();
   const { quest, stats } = view;
   const system = quest.type === "system";

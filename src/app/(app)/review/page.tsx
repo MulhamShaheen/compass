@@ -2,7 +2,7 @@ import { ShareBars } from "@/components/map/WhereLifeGoes";
 import { ReviewFinish, ReviewQuests } from "@/components/ReviewForms";
 import { LockedCard } from "@/components/bits";
 import { appNow, isUnlocked, timezone } from "@/lib/db/derive";
-import { readDb } from "@/lib/db/local-store";
+import { loadDbOrLogin } from "@/lib/db/store";
 import { lockedHint, reviewWeekFor } from "@/lib/game";
 import { unlockState } from "@/lib/db/derive";
 import { addDays, dayKey } from "@/lib/time";
@@ -10,8 +10,8 @@ import { buildReview } from "@/lib/view";
 
 export const dynamic = "force-dynamic";
 
-export default function ReviewPage() {
-  const db = readDb();
+export default async function ReviewPage() {
+  const db = await loadDbOrLogin();
   const now = appNow(db);
   if (!isUnlocked(db, "weekly_review")) {
     return <LockedCard title="Weekly review" hint={lockedHint("weekly_review", unlockState(db, now))} />;

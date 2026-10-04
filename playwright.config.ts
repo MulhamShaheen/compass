@@ -13,7 +13,7 @@ export default defineConfig({
     url: `http://localhost:${PORT}/how`,
     reuseExistingServer: false,
     timeout: 180_000,
-    // A separate data file so tests never touch your own prototype data.
-    env: { COMPASS_DATA_FILE: ".data/e2e.json" },
+    // Local file store with no sign-in, and a separate data file, so tests never touch real accounts.
+    env: { COMPASS_STORE: "local", COMPASS_DATA_FILE: ".data/e2e.json" },
   },
 });

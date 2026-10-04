@@ -6,15 +6,14 @@ import { emptyDb, type Db } from "./schema";
 /**
  * Prototype persistence: one JSON file on the server for a single character.
  *
- * This stands in for Supabase until M0 is connected. Everything reads and
- * writes through `readDb` / `mutateDb`, so swapping it for typed Supabase
- * queries (with RLS on user_id) stays local to src/lib/db.
+ * Used only with COMPASS_STORE=local (the Playwright tests). Everything else goes
+ * through src/lib/db/store.ts, which picks this or Supabase.
  */
 const FILE = process.env.COMPASS_DATA_FILE ?? path.join(process.cwd(), ".data", "compass.json");
 
 export function readDb(): Db {
   try {
-    const parsed = JSON.parse(fs.readFileSync(FILE, "utf8")) as Partial<Db>;
+    const parsed = JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ FILE, "utf8")) as Partial<Db>;
     return { ...emptyDb(), ...parsed };
   } catch {
     return emptyDb();
@@ -22,15 +21,8 @@ export function readDb(): Db {
 }
 
 export function writeDb(db: Db): void {
-  fs.mkdirSync(path.dirname(FILE), { recursive: true });
+  fs.mkdirSync(/*turbopackIgnore: true*/ path.dirname(FILE), { recursive: true });
   const tmp = `${FILE}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
-  fs.renameSync(tmp, FILE);
-}
-
-export function mutateDb<T>(fn: (db: Db) => T): T {
-  const db = readDb();
-  const result = fn(db);
-  writeDb(db);
-  return result;
+  fs.writeFileSync(/*turbopackIgnore: true*/ tmp, JSON.stringify(db, null, 2));
+  fs.renameSync(/*turbopackIgnore: true*/ tmp, FILE);
 }

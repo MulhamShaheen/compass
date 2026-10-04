@@ -1,12 +1,16 @@
 import { ThemePicker } from "@/components/fx";
 import { SettingsForm } from "@/components/ReviewForms";
-import { readDb } from "@/lib/db/local-store";
+import { signOut } from "@/lib/actions/auth";
+import { loadDbOrLogin } from "@/lib/db/store";
+import { isLocalMode } from "@/lib/supabase/env";
+import { currentUser } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default function SettingsPage() {
-  const db = readDb();
+export default async function SettingsPage() {
+  const db = await loadDbOrLogin();
   const p = db.profile!;
+  const user = isLocalMode() ? null : await currentUser();
   return (
     <main className="panel" style={{ maxWidth: 760, width: "100%", justifySelf: "center" }}>
       <div className="panel-h">
@@ -31,6 +35,17 @@ export default function SettingsPage() {
           </a>
         </div>
       </div>
+      {user && (
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, display: "grid", gap: 6 }}>
+          <div className="label">Account</div>
+          <p className="insight">Signed in as {user.email ?? "you"}.</p>
+          <form action={signOut}>
+            <button className="btn ghost" type="submit">
+              Sign out
+            </button>
+          </form>
+        </div>
+      )}
     </main>
   );
 }
