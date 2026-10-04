@@ -6,6 +6,7 @@ import { useState } from "react";
 import { updateSettings } from "@/lib/actions/profile";
 import { setQuestStatus } from "@/lib/actions/quests";
 import { completeWeeklyReview } from "@/lib/actions/review";
+import type { ActionResult } from "@/lib/actions/run";
 import { ATTRIBUTES, ATTRIBUTE_NAMES, type Attribute } from "@/lib/game/types";
 import type { ReviewView } from "@/lib/view";
 import { AttrTag, Chip } from "./bits";
@@ -140,5 +141,28 @@ export function SettingsForm(props: { characterName: string; chapterTitle: strin
       </div>
       {error && <p className="error">{error}</p>}
     </form>
+  );
+}
+
+/** Two clicks to delete the account, so it never happens by accident. */
+export function DeleteAccount({ deleteAccount }: { deleteAccount: () => Promise<ActionResult> }) {
+  const { go, pending, error } = useAction();
+  const [armed, setArmed] = useState(false);
+  return (
+    <div style={{ display: "grid", gap: 6 }}>
+      <p className="insight">Deletes your account and everything in it, for good. Export first if you want a copy.</p>
+      <div>
+        <button
+          className="btn"
+          type="button"
+          disabled={pending}
+          onClick={() => (armed ? go(() => deleteAccount()) : setArmed(true))}
+          onBlur={() => setArmed(false)}
+        >
+          {armed ? "Click again to delete everything" : "Delete account"}
+        </button>
+      </div>
+      {error && <p className="error">{error}</p>}
+    </div>
   );
 }

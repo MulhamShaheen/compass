@@ -54,7 +54,7 @@ export const DEFAULT_PROMPTS = [
 ] as const;
 
 /** Index of today's prompt. Before prompts rotate, it is always the first one. */
-export function promptIndex(startDay: DayKey, today: DayKey, rotates: boolean, count = DEFAULT_PROMPTS.length): number {
+export function promptIndex(startDay: DayKey, today: DayKey, rotates: boolean, count: number = DEFAULT_PROMPTS.length): number {
   if (!rotates) return 0;
   return ((daysBetween(startDay, today) % count) + count) % count;
 }

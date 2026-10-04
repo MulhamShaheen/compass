@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { deleteAccount as deleteAccountData } from "../db/store";
 import { createClient } from "../supabase/server";
 import { fail, type ActionResult } from "./run";
 
@@ -36,5 +37,15 @@ export async function sendMagicLink(input: z.input<typeof emailInput>): Promise<
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  redirect("/login");
+}
+
+/** Deletes the account and everything in it, then returns to the sign-in page. */
+export async function deleteAccount(): Promise<ActionResult> {
+  try {
+    await deleteAccountData();
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "The account could not be deleted. Try again.");
+  }
   redirect("/login");
 }

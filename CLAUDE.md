@@ -27,9 +27,16 @@ The app looks like a game character menu (Cyberpunk 2077 style HUD), not like th
 ## Commands
 - `npm run dev`: start the app
 - `npm test`: Vitest unit tests
-- `npm run test:e2e`: Playwright
+- `npm run test:e2e`: Playwright on the local file store (`COMPASS_STORE=local`), no sign-in
+- `npm run test:e2e:supabase`: the same flows plus access-rule and delete-account tests against the real Supabase project in `.env`, as throwaway `e2e-*@compass.test` users
 - `npm run lint && npm run typecheck`
-- `npm run db:types`: regenerate Supabase types after a migration
+- `npm run db:migrate`: apply `supabase/migrations` (add `-- --status` to list)
+- `npm run db:types`: regenerate Supabase types after a migration (hand-written in `src/lib/db/types.ts` until the Supabase CLI is installed)
+
+## Data access
+- Pages and actions use `loadDb` / `saveDb` from `src/lib/db/store.ts` only. The in-memory model is `src/lib/db/schema.ts`; `src/lib/db/tables.ts` maps it to the tables and works out which rows changed.
+- New tables need: a migration with `user_id` and an owner-only RLS policy (composite foreign keys to parents), a spec in `tables.ts`, types in `types.ts`, and a case in the RLS e2e test.
+- Never run `next build` into `.next` while `npm run dev` is up. The test servers use their own `NEXT_DIST_DIR`.
 
 ## Copy tone
 Plain, warm, and short. No exclamation marks, guilt or streak shaming. For example: "Tomorrow is a clean page." and "Log the first checkpoint above."

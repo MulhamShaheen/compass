@@ -139,6 +139,7 @@ export function WeeklyChart({ weeks }: { weeks: Where["weeks"] }) {
                 height={vh}
                 fill="transparent"
                 tabIndex={0}
+                role="img"
                 aria-label={`${w.tipLabel}: ${w.total.toFixed(1)} hours`}
                 onMouseEnter={() => setActive(i)}
                 onMouseLeave={() => setActive(null)}

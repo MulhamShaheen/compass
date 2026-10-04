@@ -184,6 +184,7 @@ export function buildMap(db: Db): MapView {
     .filter((c) => c.source !== "system")
     .flatMap((c) => [dayKey(new Date(c.createdAt), tz), dayKey(new Date(c.occurredAt), tz)]);
   const activeHabits = db.habits.filter((h) => !h.archivedAt);
+  const prompts = db.prompts?.length ? db.prompts : [...DEFAULT_PROMPTS];
 
   return {
     header: header(db, now),
@@ -239,8 +240,8 @@ export function buildMap(db: Db): MapView {
     habitSlots: habitSlots(db.reviews.length),
     reviewsCompleted: db.reviews.length,
     journal: {
-      prompts: [...DEFAULT_PROMPTS],
-      startIndex: promptIndex(state.startDay, today, unlocked.prompts_rotate),
+      prompts: prompts,
+      startIndex: promptIndex(state.startDay, today, unlocked.prompts_rotate, prompts.length),
       rotates: unlocked.prompts_rotate,
       entries: [...db.journal]
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))

@@ -14,6 +14,6 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 180_000,
     // Local file store with no sign-in, and a separate data file, so tests never touch real accounts.
-    env: { COMPASS_STORE: "local", COMPASS_DATA_FILE: ".data/e2e.json" },
+    env: { COMPASS_STORE: "local", COMPASS_DATA_FILE: ".data/e2e.json", NEXT_DIST_DIR: ".next-e2e" },
   },
 });

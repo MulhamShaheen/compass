@@ -26,11 +26,12 @@ npm run db:migrate     # applies supabase/migrations (add --status to just list 
 npm run dev            # http://localhost:3000
 npm test               # unit tests for src/lib/game
 npm run test:e2e       # Playwright, phone viewport, local file store, no sign-in
+npm run test:e2e:supabase  # same flows + access rules against Supabase
 ```
 
 `COMPASS_STORE=local` runs without Supabase or sign-in on a local JSON file (`.data/compass.json`). The e2e tests use it; it cannot work on Vercel.
 
-For now each character's game state is one JSON row (`prototype_state`), with the profile mirrored into `profiles`. Plan step 3 moves it into the full table model.
+Each table holds only its owner's rows (Row Level Security). `npm run test:e2e:supabase` runs the browser flows and the access rules against the real project, as throwaway `e2e-*@compass.test` users that it deletes afterwards.
 
 ### Supabase and Vercel settings
 
@@ -54,14 +55,14 @@ A dashed **prototype bar** at the bottom of each page holds testing tools: **Nex
 
 ## Progress
 
-- [ ] M0: Project setup (Next.js, Supabase, auth, tokens). Done: Next.js 16, TS strict, Tailwind v4, ESLint, Prettier, Vitest, Playwright, tokens, Supabase (profiles + RLS, migrations), magic-link sign-in, proxy guard. Open: sign-in on the deployed preview.
+- [ ] M0: Project setup (Next.js 16, Supabase, auth, tokens). Everything is in place and tested against Supabase; open: one sign-in on the deployed preview (needs the Vercel env vars and Supabase redirect URLs above).
 - [x] M1: Game logic library + tests
-- [ ] M2: Quests and checkpoints
-- [ ] M3: Character and Where life goes
-- [ ] M4: Daily layer (weather, habits, logbook)
-- [ ] M5: The Prologue onboarding and unlocks
-- [ ] M6: Weekly review
-- [ ] M7: PWA, export, polish
+- [x] M2: Quests and checkpoints
+- [x] M3: Character and Where life goes
+- [x] M4: Daily layer (weather, habits, logbook)
+- [x] M5: The Prologue onboarding and unlocks
+- [x] M6: Weekly review
+- [x] M7: PWA, export, polish (installable manifest and icons, offline shell, JSON export, delete account, loading skeletons, axe + Lighthouse accessibility 100). Still to try: installing on a real iPhone and Android phone.
 - [ ] M8 (v1.1): Calendar (ICS + Google), free time, event tagging
 
-Prototype status: M2 to M6 are playable, saved in Supabase as one JSON row per user (quests and checkpoints with slots, character, where life goes, today/weather/habits/logbook, the Prologue with unlocks, the weekly review). They stay unticked until they use the full table model (plan step 3).
+All data lives in the full table model (plan §2) with owner-only Row Level Security, checked by `npm run test:e2e:supabase`. The earlier `prototype_state` table is only read once, to import state saved before the move; it can be dropped once nobody has rows there.

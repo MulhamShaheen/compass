@@ -47,7 +47,9 @@ export async function loadSample(input: { timezone?: string } = {}): Promise<Act
   return guarded(async () => {
     const current = await loadDb();
     const tz = input.timezone ?? timezone(current);
-    await saveDb(buildSample(new Date(), tz));
+    const sample = buildSample(new Date(), tz);
+    sample.prompts = current.prompts;
+    await saveDb(sample, { replacing: current });
     revalidatePath("/", "layout");
     return { ok: true, message: "Sample character loaded" };
   });
@@ -55,7 +57,8 @@ export async function loadSample(input: { timezone?: string } = {}): Promise<Act
 
 export async function startOver(): Promise<ActionResult> {
   return guarded(async () => {
-    await saveDb(emptyDb());
+    const current = await loadDb();
+    await saveDb({ ...emptyDb(), prompts: current.prompts }, { replacing: current });
     revalidatePath("/", "layout");
     return { ok: true };
   });

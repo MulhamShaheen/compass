@@ -13,7 +13,8 @@
     "test:e2e": "playwright test",
     "format": "prettier --write .",
     "db:types": "echo \"Types are hand-written in src/lib/db/types.ts until the Supabase CLI is installed (brew install supabase/tap/supabase), then: supabase gen types typescript --db-url \\\"$SUPABASE_DB_URL\\\" > src/lib/db/types.ts\"",
-    "db:migrate": "node --env-file=.env scripts/migrate.mjs"
+    "db:migrate": "node --env-file=.env scripts/migrate.mjs",
+    "test:e2e:supabase": "playwright test -c playwright.supabase.config.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -27,6 +28,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.19.1",

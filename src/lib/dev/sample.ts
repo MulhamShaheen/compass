@@ -100,8 +100,7 @@ export function buildSample(now: Date, tz: string): Db {
   const at = (n: number, h: number, m: number) => localInputToDate(`${ago(n)}T${pad(h)}:${pad(m)}`, tz).toISOString();
   const start = at(120, 20, 0);
   const db = emptyDb();
-  let seq = 0;
-  const id = (prefix: string) => `${prefix}-${++seq}`;
+  const id = () => crypto.randomUUID();
 
   db.profile = {
     characterName: "Sam",
@@ -111,31 +110,31 @@ export function buildSample(now: Date, tz: string): Db {
     prologueCompletedAt: start,
     createdAt: start,
   };
-  const chapterId = id("chapter");
+  const chapterId = id();
   db.chapters.push({ id: chapterId, title: "Chapter 3 · The Builder's Year", startedOn: ago(120), endedOn: null });
 
   const prologue: Quest = {
-    id: id("quest"), chapterId, type: "system", status: "done", title: "Prologue",
+    id: id(), chapterId, type: "system", status: "done", title: "Prologue",
     why: "How the story started.", primaryAttr: "spirit", secondaryAttr: null,
     startedOn: ago(120), completedAt: start, createdAt: start,
   };
   db.quests.push(prologue);
   db.checkpoints.push({
-    id: id("cp"), questId: prologue.id, occurredAt: start, title: "The story begins", note: null,
+    id: id(), questId: prologue.id, occurredAt: start, title: "The story begins", note: null,
     minutes: 0, isMilestone: true, source: "system", createdAt: start,
   });
 
   for (const seed of SAMPLE_QUESTS) {
     const created = at(seed.startDaysAgo, 9, 0);
     const quest: Quest = {
-      id: id("quest"), chapterId, type: seed.type, status: seed.status, title: seed.title, why: seed.why,
+      id: id(), chapterId, type: seed.type, status: seed.status, title: seed.title, why: seed.why,
       primaryAttr: seed.attrs[0], secondaryAttr: seed.attrs[1] ?? null, startedOn: ago(seed.startDaysAgo),
       completedAt: seed.status === "done" ? at(seed.cps[seed.cps.length - 1][0], 12, 0) : null, createdAt: created,
     };
     db.quests.push(quest);
     for (const [n, h, m, title, note, minutes, ms] of seed.cps) {
       const cp: Checkpoint = {
-        id: id("cp"), questId: quest.id, occurredAt: at(n, h, m), title, note, minutes,
+        id: id(), questId: quest.id, occurredAt: at(n, h, m), title, note, minutes,
         isMilestone: !!ms, source: "manual", createdAt: at(n, h, m),
       };
       db.checkpoints.push(cp);
@@ -143,7 +142,7 @@ export function buildSample(now: Date, tz: string): Db {
   }
 
   for (const h of SAMPLE_HABITS) {
-    const habitId = id("habit");
+    const habitId = id();
     db.habits.push({ id: habitId, name: h.name, kind: h.kind, archivedAt: null, createdAt: start });
     for (const n of h.daysAgo) db.habitLogs.push({ habitId, day: ago(n) });
   }
@@ -152,12 +151,12 @@ export function buildSample(now: Date, tz: string): Db {
   db.weather.push({ day: ago(1), weather });
   db.journal.push(
     {
-      id: id("entry"), day: ago(1), prompt: "What drained you, and what fed you?", weather: "cloudy",
+      id: id(), day: ago(1), prompt: "What drained you, and what fed you?", weather: "cloudy",
       body: "Long day of meetings drained me. The evening run fed me more than I expected. Want to protect that hour.",
       createdAt: at(1, 22, 0),
     },
     {
-      id: id("entry"), day: ago(3), prompt: "What small thing went better than expected?", weather: "clear",
+      id: id(), day: ago(3), prompt: "What small thing went better than expected?", weather: "clear",
       body: "Finished the concept for Compass. Seeing my life as quests already makes the week feel lighter.",
       createdAt: at(3, 22, 0),
     },
@@ -165,7 +164,7 @@ export function buildSample(now: Date, tz: string): Db {
 
   // Three past weekly reviews, so the five sample habits fit their slots.
   for (const n of [21, 14, 7]) {
-    db.reviews.push({ id: id("review"), weekStart: weekStart(ago(n)), note: null, completedAt: at(n, 20, 0) });
+    db.reviews.push({ id: id(), weekStart: weekStart(ago(n)), note: null, completedAt: at(n, 20, 0) });
   }
 
   for (const feature of FEATURES) {

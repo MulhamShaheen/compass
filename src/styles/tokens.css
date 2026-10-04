@@ -50,18 +50,18 @@
   --line: #c3ccd3;
   --label: #c4002b;
 
-  --accent: #007c89;
+  --accent: #00707c;
   --red: #d4002c;
-  --brass: #8a7d00;
+  --brass: #706600;
   --brass-soft: #f3efc2;
-  --good: #0a8a4c;
+  --good: #087540;
   --bad: #d4002c;
 
-  --a-body: #d9481a;
+  --a-body: #b53c16;
   --a-mind: #7b3fe0;
-  --a-bonds: #0a9a5a;
-  --a-craft: #b88500;
-  --a-spirit: #c2259f;
+  --a-bonds: #087444;
+  --a-craft: #825e00;
+  --a-spirit: #b52394;
 
   --grid: rgba(0, 124, 137, 0.07);
   --scan: rgba(0, 0, 0, 0.035);

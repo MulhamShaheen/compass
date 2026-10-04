@@ -113,6 +113,8 @@ export interface Db {
   reviews: WeeklyReview[];
   /** Prototype only: shifts the app clock by whole days to simulate the first week. */
   dev: { dayOffset: number };
+  /** Active logbook prompts, read-only (the prompts table). Falls back to the defaults. */
+  prompts?: string[];
 }
 
 export function emptyDb(): Db {

@@ -1,6 +1,6 @@
 import { ThemePicker } from "@/components/fx";
-import { SettingsForm } from "@/components/ReviewForms";
-import { signOut } from "@/lib/actions/auth";
+import { DeleteAccount, SettingsForm } from "@/components/ReviewForms";
+import { deleteAccount, signOut } from "@/lib/actions/auth";
 import { loadDbOrLogin } from "@/lib/db/store";
 import { isLocalMode } from "@/lib/supabase/env";
 import { currentUser } from "@/lib/supabase/server";
@@ -44,6 +44,7 @@ export default async function SettingsPage() {
               Sign out
             </button>
           </form>
+          <DeleteAccount deleteAccount={deleteAccount} />
         </div>
       )}
     </main>

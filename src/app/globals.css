@@ -725,3 +725,18 @@ header::after {
 /* ---------- sign in ---------- */
 .login .rose { width: 56px; height: 56px; }
 .login input[type="text"] { max-width: 420px; }
+
+/* ---------- loading skeletons ---------- */
+.skel { gap: 12px; }
+.skel i { display: block; background: color-mix(in srgb, var(--line) 70%, transparent); position: relative; overflow: hidden; }
+.skel .skel-h { width: 45%; height: 18px; }
+.skel .skel-line { height: 10px; }
+.skel i::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 22%, transparent), transparent);
+  transform: translateX(-100%);
+  animation: sweep 1.4s ease-in-out infinite;
+}
+.skel-status { margin: 0; }
+.skel-status::after { content: " ···" / ""; animation: blink 1s steps(2) infinite; }
