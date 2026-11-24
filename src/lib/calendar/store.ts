@@ -13,7 +13,7 @@ type Client = SupabaseClient<Database>;
 type Reply<T> = { data: T | null; error: { message: string; code?: string } | null };
 
 function result<T>(response: Reply<T>): T {
-  if (response.error) throw new Error(response.error.message);
+  if (response.error) throw Object.assign(new Error(response.error.message), { code: response.error.code });
   if (response.data === null) throw new Error("Calendar data is unavailable.");
   return response.data;
 }
@@ -44,12 +44,13 @@ class SupabaseCalendarStore implements CalendarStore {
   constructor(private client: Client, private userId: string) {}
 
   async load(): Promise<CalendarData> {
-    const [sources, events, rules, confirmations, profile] = await Promise.all([
+    const [sources, events, rules, confirmations, profile, dismissedIds] = await Promise.all([
       pages((a,b) => this.client.from("calendar_sources").select("id,kind,label,last_synced_at").eq("user_id",this.userId).order("id").range(a,b)),
       pages((a,b) => this.client.from("calendar_events").select("id,source_id,external_id,title,starts_at,ends_at").eq("user_id",this.userId).order("id").range(a,b)),
       pages((a,b) => this.client.from("calendar_rules").select("id,match_text,quest_id,attr").eq("user_id",this.userId).order("id").range(a,b)),
       pages((a,b) => this.client.from("checkpoints").select("source_ref").eq("user_id",this.userId).eq("source","calendar").order("id").range(a,b)),
       this.client.from("profiles").select("waking_start,waking_end").eq("user_id",this.userId).single(),
+      this.dismissedEventIds(),
     ]);
     const hours = result(profile);
     return {
@@ -57,8 +58,20 @@ class SupabaseCalendarStore implements CalendarStore {
       events: events.map(e => ({ id: e.id, sourceId: e.source_id, externalId: e.external_id, title: e.title, start: e.starts_at, end: e.ends_at })),
       rules: rules.map(r => ({ id: r.id, match: r.match_text, questId: r.quest_id, attribute: r.attr })),
       confirmedIds: confirmations.flatMap(c => c.source_ref ? [c.source_ref] : []),
+      dismissedIds,
       wakingStart: hours.waking_start?.slice(0,5) ?? "07:00", wakingEnd: hours.waking_end?.slice(0,5) ?? "23:00",
     };
+  }
+
+  private async dismissedEventIds() {
+    try {
+      const rows = await pages((a, b) => this.client.from("calendar_dismissals").select("event_id")
+        .eq("user_id", this.userId).order("event_id").range(a, b));
+      return rows.map(({ event_id }) => event_id);
+    } catch (error) {
+      if (error instanceof Error && "code" in error && (error.code === "PGRST205" || error.code === "42P01")) return null;
+      throw error;
+    }
   }
 
   async addSource(kind: CalendarKind, name: string, secret: string) {
@@ -102,6 +115,10 @@ class SupabaseCalendarStore implements CalendarStore {
 
   async confirmEvent(eventId: string, questId: string) {
     check(await this.client.rpc("calendar_confirm", { p_event: eventId, p_quest: questId }));
+  }
+
+  async dismissEvent(eventId: string) {
+    check(await this.client.rpc("calendar_dismiss", { p_event: eventId }));
   }
 
   async clear() {

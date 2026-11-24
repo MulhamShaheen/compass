@@ -32,6 +32,8 @@ export interface CalendarData {
   events: CalendarEvent[];
   rules: CalendarRule[];
   confirmedIds: string[];
+  /** Null when the deployment is still waiting for the dismissal migration. */
+  dismissedIds: string[] | null;
   wakingStart: string;
   wakingEnd: string;
 }
@@ -59,6 +61,7 @@ export interface CalendarStore {
   removeRule(id: string): Promise<void>;
   setWakingHours(start: string, end: string): Promise<void>;
   confirmEvent(eventId: string, questId: string): Promise<void>;
+  dismissEvent(eventId: string): Promise<void>;
   readSync(id: string): Promise<CalendarSyncState>;
   applySync(id: string, version: number, changes: CalendarSyncChanges): Promise<boolean>;
   clear(): Promise<void>;

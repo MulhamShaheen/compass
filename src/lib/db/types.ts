@@ -45,6 +45,7 @@ export interface Database {
         { id: string; user_id: string; match_text: string; quest_id: string | null; attr: AttributeEnum | null },
         "id" | "user_id" | "quest_id" | "attr"
       >;
+      calendar_dismissals: Table<{ user_id: string; event_id: string; source_id: string }, never>;
       chapters: Table<
         { id: string; user_id: string; title: string; started_on: string; ended_on: string | null; summary: string | null },
         "id" | "user_id" | "started_on" | "ended_on" | "summary"
@@ -115,6 +116,7 @@ export interface Database {
         Returns: boolean;
       };
       calendar_confirm: { Args: { p_event: string; p_quest: string }; Returns: undefined };
+      calendar_dismiss: { Args: { p_event: string }; Returns: undefined };
       calendar_clear: { Args: Record<string, never>; Returns: undefined };
       delete_my_account: { Args: Record<string, never>; Returns: undefined };
     };

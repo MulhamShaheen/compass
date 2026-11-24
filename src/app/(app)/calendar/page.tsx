@@ -3,7 +3,7 @@ import { LockedCard } from "@/components/bits";
 import { formatInTimeZone } from "date-fns-tz";
 import { ConnectSource, SourceControls, Suggestion, TaggingRules, WakingHours } from "@/components/calendar/CalendarForms";
 import { calendarStore } from "@/lib/calendar/store";
-import { matchingQuests } from "@/lib/calendar/suggestions";
+import { suggestedCheckpoints } from "@/lib/calendar/suggestions";
 import { loadDbOrLogin } from "@/lib/db/store";
 import { canConnectCalendar, timezone } from "@/lib/db/derive";
 import { calendarWeek } from "@/lib/game/time";
@@ -66,12 +66,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
   const now = new Date();
   const quests = db.quests.filter((quest) => quest.type !== "system" && quest.status === "active");
   const option = ({ id, title }: { id: string; title: string }) => ({ id, title });
-  const confirmed = new Set(calendar.confirmedIds);
-  const suggestions = calendar.events
-    .filter((event) => !confirmed.has(event.id) && Date.parse(event.end) <= now.getTime())
-    .map((event) => ({ event, quests: matchingQuests(event, calendar.rules, quests).map(option) }))
-    .filter((item) => item.quests.length > 0)
-    .sort((a, b) => Date.parse(b.event.start) - Date.parse(a.event.start));
+  const hidden = new Set([...calendar.confirmedIds, ...(calendar.dismissedIds ?? [])]);
+  const suggestions = suggestedCheckpoints(calendar.events, calendar.rules, quests, now, hidden);
   const pageCount = Math.max(1, Math.ceil(suggestions.length / 10));
   const currentPage = Math.min(pageCount, Math.max(1, Math.floor(Number(page)) || 1));
   const syncTimes = calendar.sources.map((source) => Date.parse(source.lastSyncedAt ?? ""));
@@ -103,8 +99,11 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
       <section className="panel" id="suggestions">
         <div className="panel-h"><h2>Suggested checkpoints</h2></div>
         {suggestions.length ? <ul className="calendar-list">
-          {suggestions.slice((currentPage - 1) * 10, currentPage * 10).map(({ event, quests }) => <Suggestion
-            key={event.id} eventId={event.id} title={event.title} quests={quests}
+          {suggestions.slice((currentPage - 1) * 10, currentPage * 10).map(({ event, matches }) => <Suggestion
+            key={event.id} eventId={event.id} title={event.title}
+            quests={matches.map(({ quest }) => option(quest))}
+            rules={[...new Map(matches.flatMap(({ rules }) => rules.map((rule) => [rule.id, rule] as const))).values()]}
+            canDismiss={calendar.dismissedIds !== null}
             detail={`${dateTime(event.start)} · ${duration((Date.parse(event.end) - Date.parse(event.start)) / 60000)}`}
           />)}
         </ul> : <p className="empty">{calendar.rules.length ? "Past events that match a rule and an active quest appear here." : "Add an event rule below to suggest checkpoints for your active quests."}</p>}

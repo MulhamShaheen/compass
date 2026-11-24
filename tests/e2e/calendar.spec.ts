@@ -19,6 +19,7 @@ test("calendar time and event rules lead to one confirmed quest checkpoint", asy
   const monday = weekStart(dayKey(now, "UTC"));
   const sourceId = randomUUID();
   const eventTitle = "Evening club run";
+  const dismissedTitle = "Morning club run";
   const sample = buildSample(now, "UTC");
   const quest = sample.quests.find((q) => q.title === "Run a 10K")!;
   const occurrence = (title: string, day: string) => {
@@ -30,7 +31,8 @@ test("calendar time and event rules lead to one confirmed quest checkpoint", asy
   };
   const feed = [
     "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Compass//E2E//EN",
-    occurrence(eventTitle, addDays(monday, -1)), occurrence("Team catch-up", monday), "END:VCALENDAR",
+    occurrence(eventTitle, addDays(monday, -1)), occurrence(dismissedTitle, addDays(monday, -2)),
+    occurrence("Team catch-up", monday), "END:VCALENDAR",
   ].join("\r\n");
   const snapshot = {
     sources: [{ id: sourceId, name: "Training calendar", kind: "ics", lastSyncedAt: now.toISOString(), secret: "https://example.com/training.ics", cursor: "private-sync-cursor", version: 1 }],
@@ -57,7 +59,21 @@ test("calendar time and event rules lead to one confirmed quest checkpoint", asy
 
     await page.getByLabel("Title contains").fill("club run");
     await page.getByLabel("Suggest a checkpoint for").selectOption({ label: quest.title });
+    await page.getByRole("button", { name: "Preview matches" }).click();
+    const preview = page.getByRole("region", { name: "Recent matches" });
+    await expect(preview.getByRole("listitem").first()).toContainText(eventTitle);
+    await expect(preview).toContainText(dismissedTitle);
+    await expect(page.getByRole("button", { name: "Log checkpoint" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Remove rule for club run" })).toHaveCount(0);
     await page.getByRole("button", { name: "Add rule" }).click();
+    await expect(preview).toHaveCount(0);
+    const event = page.locator("#suggestions li").filter({ has: page.getByText(eventTitle, { exact: true }) });
+    await event.getByText("Why this was suggested").click();
+    await expect(event.getByText("“club run” → " + quest.title)).toBeVisible();
+    await page.getByRole("button", { name: "Dismiss " + dismissedTitle }).click();
+    await expect(page.locator("#suggestions").getByText(dismissedTitle)).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator("#suggestions").getByText(dismissedTitle)).toHaveCount(0);
     await expect(page.getByText(eventTitle)).toBeVisible();
     const scan = await new AxeBuilder({ page }).include(".calendar-page")
       .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
@@ -82,6 +98,9 @@ test("calendar time and event rules lead to one confirmed quest checkpoint", asy
     expect(download.calendar.events).toEqual(expect.arrayContaining([
       expect.objectContaining({ title: eventTitle, sourceId }),
     ]));
+    expect(download.calendar.dismissedIds).toEqual(
+      snapshot.events.filter((event) => event.title === dismissedTitle).map(({ id }) => id),
+    );
     const json = JSON.stringify(download);
     expect(json).not.toContain(snapshot.sources[0].secret);
     expect(json).not.toContain(snapshot.sources[0].cursor);
