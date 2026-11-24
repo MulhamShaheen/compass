@@ -54,6 +54,7 @@ export interface Checkpoint {
   minutes: number;
   isMilestone: boolean;
   source: "manual" | "calendar" | "system";
+  sourceRef?: string;
   createdAt: string;
 }
 

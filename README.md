@@ -53,6 +53,17 @@ A dashed **prototype bar** at the bottom of each page holds testing tools: **Nex
 8. Settings: quiet mode, timezone, JSON export.
 9. **Load sample character** to see a full map that matches `docs/prototype/compass.html`.
 
+## Calendar setup
+
+After the first weekly review, open **Time** in the navigation. Loading the sample character also unlocks it for local testing. Connect a read-only HTTPS or webcal ICS subscription, set waking hours and add a title rule for an active quest or an attribute. Past matching events appear under **Suggested checkpoints**. Disconnecting removes imported events and keeps checkpoints you chose to log.
+
+1. In your Supabase deployment, apply the pending migration with `npm run db:migrate` using the project’s database settings in your local `.env`. The migration installs Supabase Vault and creates the calendar tables, access policies and functions. Put `SUPABASE_SERVICE_ROLE_KEY` in the server environment for the app. Local file mode can sync an ICS source without this setup.
+2. For Google Calendar, enable the Google Calendar API, configure the OAuth consent screen and any test users, and create a **Web application** OAuth client. Register the exact URL `https://<your-app-host>/api/calendar/google/callback` for each host you use. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` on the server. Each user connects their own primary Google calendar from **Time**.
+3. For scheduled sync, set a random `CRON_SECRET` on Vercel. The default Vercel schedule runs daily, which works on Hobby plans. To use the 30-minute interval in the implementation plan, set the schedule to `*/30 * * * *` on a supported Vercel plan, or configure a scheduler to send a GET to `/api/cron/calendar-sync` every 30 minutes with `Authorization: Bearer <CRON_SECRET>`. The **Sync** button works independently.
+4. On the deployed app, connect an iCloud subscription, compare this week’s free hours with the source, and confirm one matching past event. For Google, complete consent and verify that a change on the primary calendar appears after sync.
+
+The [iteration log and idea backlog](docs/CALENDAR_ITERATIONS.md) records the design choices, checks and follow-up experiments.
+
 ## Progress
 
 - [ ] M0: Project setup (Next.js 16, Supabase, auth, tokens). Everything is in place and tested against Supabase; open: one sign-in on the deployed preview (needs the Vercel env vars and Supabase redirect URLs above).
@@ -63,6 +74,6 @@ A dashed **prototype bar** at the bottom of each page holds testing tools: **Nex
 - [x] M5: The Prologue onboarding and unlocks
 - [x] M6: Weekly review
 - [x] M7: PWA, export, polish (installable manifest and icons, offline shell, JSON export, delete account, loading skeletons, axe + Lighthouse accessibility 100). Still to try: installing on a real iPhone and Android phone.
-- [ ] M8 (v1.1): Calendar (ICS + Google), free time, event tagging
+- [ ] M8 (v1.1): ICS and Google Calendar sync, free time and event tagging implemented. Open acceptance check: verify a real iCloud feed and one-tap checkpoint on the deployed app.
 
 All data lives in the full table model (plan §2) with owner-only Row Level Security, checked by `npm run test:e2e:supabase`. The earlier `prototype_state` table is only read once, to import state saved before the move; it can be dropped once nobody has rows there.

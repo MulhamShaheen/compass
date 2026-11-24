@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { BootScreen } from "@/components/bits";
 import { DevBar } from "@/components/DevBar";
 import { Header, Nav } from "@/components/Header";
+import { canConnectCalendar } from "@/lib/db/derive";
 import { loadDbOrLogin } from "@/lib/db/store";
 import { buildHeader } from "@/lib/view";
 
@@ -15,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="wrap">
       <BootScreen name={header.name} level={header.level.level} day={header.dayNumber} />
       <Header view={header} />
-      <Nav reviewUnlocked={header.reviewUnlocked} />
+      <Nav reviewUnlocked={header.reviewUnlocked} calendarUnlocked={canConnectCalendar(db)} />
       {children}
       <DevBar dayNumber={header.dayNumber} dayOffset={header.dayOffset} todayLabel={header.todayLabel} />
     </div>

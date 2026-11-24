@@ -58,7 +58,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 }
 
 /* ---------- form controls ---------- */
-input[type="text"], input[type="datetime-local"], textarea, select {
+input[type="text"], input[type="datetime-local"], input[type="time"], input[type="url"], textarea, select {
   background: color-mix(in srgb, var(--bg) 70%, var(--panel));
   border: 1px solid var(--line);
   border-left: 2px solid color-mix(in srgb, var(--accent) 55%, var(--line));
@@ -70,7 +70,7 @@ input[type="text"], input[type="datetime-local"], textarea, select {
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.8; }
-input[type="text"]:focus, input[type="datetime-local"]:focus, textarea:focus, select:focus {
+input[type="text"]:focus, input[type="datetime-local"]:focus, input[type="time"]:focus, input[type="url"]:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 1px var(--accent), 0 0 18px var(--glow-accent);
@@ -740,3 +740,21 @@ header::after {
 }
 .skel-status { margin: 0; }
 .skel-status::after { content: " ···" / ""; animation: blink 1s steps(2) infinite; }
+
+/* Calendar and weekly time */
+.calendar-week caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.calendar-page { width: min(100%, 840px); min-width: 0; justify-self: center; display: grid; gap: 16px; }
+.calendar-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.calendar-item { border-left: 2px solid var(--accent); border-bottom: 1px solid var(--line); padding: 9px 12px; display: flex; gap: 8px 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; overflow-wrap: anywhere; }
+.calendar-buttons, .calendar-hour-inputs { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.calendar-hour-inputs .field { flex: 1 1 120px; }
+.calendar-total { font: 600 18px var(--display); }
+.calendar-total strong { color: var(--accent); font: 700 clamp(26px, 6vw, 40px) var(--brand); }
+.calendar-week { width: 100%; border-collapse: collapse; font: 400 13px var(--mono); }
+.calendar-week th, .calendar-week td { text-align: right; padding: 5px 2px; white-space: nowrap; }
+.calendar-week th:first-child { text-align: left; }
+.calendar-week th { font-weight: normal; }
+.calendar-week thead { color: var(--muted); }
+.calendar-week td:nth-child(2) { width: 48%; padding-inline: 8px; }
+.calendar-meter { width: 100%; height: 8px; background: color-mix(in srgb, var(--accent) 35%, var(--panel)); }
+.calendar-meter i { display: block; height: 100%; background: var(--brass); }

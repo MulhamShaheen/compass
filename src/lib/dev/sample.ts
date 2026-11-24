@@ -168,7 +168,6 @@ export function buildSample(now: Date, tz: string): Db {
   }
 
   for (const feature of FEATURES) {
-    if (feature === "calendar") continue;
     db.unlocks.push({ feature, unlockedAt: start, seenAt: start });
   }
   return db;

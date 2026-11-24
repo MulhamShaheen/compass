@@ -191,7 +191,7 @@ export function buildMap(db: Db): MapView {
     unlocked,
     hints,
     fresh: db.unlocks
-      .filter((u) => !u.seenAt && u.feature !== "calendar")
+      .filter((u) => !u.seenAt)
       .map((u) => ({ feature: u.feature, ...UNLOCK_COPY[u.feature] })),
     attributes: ATTRIBUTES.map((attr) => ({
       attr,

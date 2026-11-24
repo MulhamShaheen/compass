@@ -47,7 +47,7 @@ for (const theme of ["dark", "light"] as const) {
     await page.waitForURL("**/quests/**");
     await scan(page, "quest thread");
 
-    for (const path of ["/review", "/how", "/settings"]) {
+    for (const path of ["/review", "/how", "/settings", "/calendar"]) {
       await page.goto(path);
       await scan(page, path);
     }

@@ -53,7 +53,7 @@ export const SPECS: Spec[] = [
     key: "checkpoints", table: "checkpoints", keyCols: ["id"], onConflict: "id",
     toRow: (c, user_id) => ({
       id: c.id, user_id, quest_id: c.questId, occurred_at: c.occurredAt, title: c.title, note: c.note,
-      minutes: c.minutes, is_milestone: c.isMilestone, source: c.source, created_at: c.createdAt,
+      minutes: c.minutes, is_milestone: c.isMilestone, source: c.source, ...(c.sourceRef ? { source_ref: c.sourceRef } : {}), created_at: c.createdAt,
     }),
   }),
   spec({
@@ -162,7 +162,7 @@ export function rowsToDb(r: LoadedRows): Db {
   }));
   db.checkpoints = r.checkpoints.map((c) => ({
     id: c.id, questId: c.quest_id, occurredAt: iso(c.occurred_at)!, title: c.title, note: c.note,
-    minutes: c.minutes, isMilestone: c.is_milestone, source: c.source, createdAt: iso(c.created_at)!,
+    minutes: c.minutes, isMilestone: c.is_milestone, source: c.source, ...(c.source_ref ? { sourceRef: c.source_ref } : {}), createdAt: iso(c.created_at)!,
   }));
   db.habits = r.habits.map((h) => ({ id: h.id, name: h.name, kind: h.kind, archivedAt: iso(h.archived_at), createdAt: iso(h.created_at)! }));
   db.habitLogs = r.habit_logs.map((l) => ({ habitId: l.habit_id, day: l.day }));

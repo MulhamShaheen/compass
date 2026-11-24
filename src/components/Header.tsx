@@ -77,11 +77,12 @@ export function Header({ view }: { view: HeaderView }) {
   );
 }
 
-export function Nav({ reviewUnlocked }: { reviewUnlocked: boolean }) {
+export function Nav({ reviewUnlocked, calendarUnlocked }: { reviewUnlocked: boolean; calendarUnlocked: boolean }) {
   const path = usePathname();
   const links: [string, string][] = [
     ["/", "The map"],
     ...(reviewUnlocked ? ([["/review", "Weekly review"]] as [string, string][]) : []),
+    ...(calendarUnlocked ? ([["/calendar", "Time"]] as [string, string][]) : []),
     ["/how", "How it plays"],
     ["/settings", "Settings"],
   ];

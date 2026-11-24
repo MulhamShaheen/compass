@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { ThemePicker } from "@/components/fx";
 import { DeleteAccount, SettingsForm } from "@/components/ReviewForms";
 import { deleteAccount, signOut } from "@/lib/actions/auth";
+import { canConnectCalendar } from "@/lib/db/derive";
 import { loadDbOrLogin } from "@/lib/db/store";
 import { isLocalMode } from "@/lib/supabase/env";
 import { currentUser } from "@/lib/supabase/server";
@@ -26,6 +28,11 @@ export default async function SettingsPage() {
         <div className="label">Appearance</div>
         <ThemePicker />
       </div>
+      {canConnectCalendar(db) && (
+        <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12 }}>
+          <Link className="link" href="/calendar#calendars">Manage calendars and waking hours</Link>
+        </div>
+      )}
       <div style={{ borderTop: "1px solid var(--line)", paddingTop: 12, display: "grid", gap: 6 }}>
         <div className="label">Your data</div>
         <p className="insight">This is a diary. It belongs to you. Download everything as JSON at any time.</p>
