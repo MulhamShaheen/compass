@@ -193,7 +193,7 @@ export function Logbook({ journal }: { journal: MapView["journal"] }) {
           </div>
           {reflecting && error && <p className="error" role="alert">{error}</p>}
         </form>
-        <div className="entries">
+        <div className="entries" role="region" aria-label="Saved entries" tabIndex={journal.entries.length ? 0 : undefined}>
           {journal.entries.length === 0 && <p className="empty">Your entries will gather here.</p>}
           {journal.entries.map((j) => (
             <div className="entry" key={j.id}>
