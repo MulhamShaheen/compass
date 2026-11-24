@@ -17,6 +17,7 @@ const TABLES = [
   "calendar_sources",
   "calendar_events",
   "calendar_rules",
+  "calendar_dismissals",
 ];
 
 test.describe("access rules", () => {
@@ -88,7 +89,10 @@ test.describe("access rules", () => {
       const connected = await admin.query("select calendar_connect($1,'ics','Test calendar',$2) id", [a.id, crypto.randomUUID()]);
       const source = connected.rows[0].id as string;
       const event = crypto.randomUUID();
-      const events = [{ id: event, externalId: "practice", title: "Piano practice", start_time: "2025-01-10T10:00:00Z", end_time: "2025-01-10T11:00:00Z" }];
+      const dismissed = crypto.randomUUID();
+      const events = [event, dismissed].map((id) => ({
+        id, externalId: id, title: "Piano practice", start_time: "2025-01-10T10:00:00Z", end_time: "2025-01-10T11:00:00Z",
+      }));
       const sync = () => admin.query("select calendar_sync_apply($1,$2,0,$3,'{}',true,null) applied", [a.id, source, JSON.stringify(events)]);
       expect((await sync()).rows[0].applied).toBe(true);
       expect((await sync()).rows[0].applied).toBe(false);
@@ -102,11 +106,18 @@ test.describe("access rules", () => {
       }
       const rpc = (name: string, token: string, body: object) => rest("rpc/" + name, token, { method: "POST", body: JSON.stringify(body) });
       expect((await rpc("calendar_sync_read", a.token, { p_user: a.id, p_id: source })).status).toBeGreaterThanOrEqual(400);
-      const confirm = (token: string) => rpc("calendar_confirm", token, { p_event: event, p_quest: questId });
+      const confirm = (token: string, id = event) => rpc("calendar_confirm", token, { p_event: id, p_quest: questId });
+      const dismiss = (token: string) => rpc("calendar_dismiss", token, { p_event: dismissed });
+      expect((await dismiss(b.token)).status).toBeGreaterThanOrEqual(400);
+      expect((await dismiss(a.token)).status).toBeLessThan(300);
+      expect((await rest("calendar_dismissals?select=event_id", a.token)).body).toContainEqual({ event_id: dismissed });
+      expect((await rest("calendar_dismissals?user_id=eq." + a.id, b.token)).body).toEqual([]);
+      expect((await confirm(a.token, dismissed)).status).toBeGreaterThanOrEqual(400);
       expect((await confirm(b.token)).status).toBeGreaterThanOrEqual(400);
       for (const result of await Promise.all([confirm(a.token), confirm(a.token)])) expect(result.status).toBeLessThan(300);
       expect((await rest("calendar_sources?id=eq." + source, a.token, { method: "DELETE" })).status).toBeLessThan(300);
       expect((await rest("calendar_events?id=eq." + event, a.token)).body).toEqual([]);
+      expect((await rest("calendar_dismissals?event_id=eq." + dismissed, a.token)).body).toEqual([]);
       expect((await rest("checkpoints?select=minutes&source_ref=eq." + event, a.token)).body).toEqual([{ minutes: 60 }]);
     } finally {
       await admin.end();

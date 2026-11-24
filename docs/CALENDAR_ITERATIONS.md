@@ -23,14 +23,22 @@ The Vercel schedule defaults to daily so deploying on Hobby works. Enable the pl
 
 The [calendar setup checklist](../README.md#calendar-setup) covers migration, environment variables and the deployed acceptance check.
 
+## Iteration 4 — Calendar suggestion controls
+
+Try a draft rule against up to three recent events before saving it. The preview uses the same active-quest rules as the suggestion list. Each saved suggestion explains which title rules matched.
+
+Dismissal hides one occurrence and leaves the busy time intact. It survives refreshes and a second tab cannot log the dismissed event. The database removes dismissals when their calendar is disconnected. Rule previews and explanations remain available while the dismissal migration is pending.
+
+Vercel marked the original calendar merge deployed. A network restriction prevented checking production sign-in or syncing a live provider from this workspace.
+
 ## Product ideas for review
 
 These are proposals for later iterations. Pick one question to try with a real week of use before expanding the feature.
 
 | Idea | Smallest experiment | What to learn |
 | --- | --- | --- |
-| Explain and preview tagging rules | Show the matching phrase, candidate quest, and three recent matches while editing a rule. | Can someone spot a rule that will suggest the wrong events? |
-| Snooze or dismiss suggestions | Hide one occurrence or defer it to the weekly review. | Do people feel comfortable leaving an event unlogged? |
+| Editing saved tagging rules | Let someone adjust an existing rule and preview up to three recent matches before saving. | Can they spot rules that suggest the wrong events? |
+| Snooze a suggestion | Defer one occurrence to the weekly review. | Does postponing help someone reflect on whether to log it? |
 | Busy-only calendar privacy | Offer a per-source option to discard titles and retain intervals. | Will users include sensitive calendars when titles stay private? |
 | Memorable planned moments | Ask which scheduled activity became a checkpoint worth remembering. | Does looking back at planned time reveal a moment the user wants to keep? |
 | True North reflection | Invite the user to choose one checkpoint that expressed their True North, or name a next checkpoint from a logbook intention. | Does the review reconnect the week to a personal goal? |

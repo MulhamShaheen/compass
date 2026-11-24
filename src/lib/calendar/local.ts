@@ -14,8 +14,9 @@ interface PrivateSource extends CalendarSource {
   version: number;
 }
 
-interface LocalData extends Omit<CalendarData, "sources" | "confirmedIds"> {
+interface LocalData extends Omit<CalendarData, "sources" | "confirmedIds" | "dismissedIds"> {
   sources: PrivateSource[];
+  dismissals?: Record<string, string>;
 }
 
 function publicSource({ id, name, kind, lastSyncedAt }: CalendarSource): CalendarSource {
@@ -48,9 +49,9 @@ export class LocalCalendarStore implements CalendarStore {
   }
 
   async load(): Promise<CalendarData> {
-    const data = this.read();
+    const { dismissals, ...data } = this.read();
     const confirmedIds = readDb().checkpoints.flatMap(c => c.source === "calendar" && c.sourceRef ? [c.sourceRef] : []);
-    return { ...data, sources: data.sources.map(publicSource), confirmedIds };
+    return { ...data, sources: data.sources.map(publicSource), confirmedIds, dismissedIds: Object.keys(dismissals ?? {}) };
   }
 
   async addSource(kind: CalendarKind, name: string, secret: string): Promise<string> {
@@ -74,6 +75,9 @@ export class LocalCalendarStore implements CalendarStore {
     const data = this.read();
     data.sources = data.sources.filter(s => s.id !== id);
     data.events = data.events.filter(e => e.sourceId !== id);
+    if (data.dismissals) {
+      data.dismissals = Object.fromEntries(Object.entries(data.dismissals).filter(([, sourceId]) => sourceId !== id));
+    }
     this.write(data);
   }
 
@@ -122,9 +126,9 @@ export class LocalCalendarStore implements CalendarStore {
   async confirmEvent(eventId: string, questId: string) {
     const db = readDb();
     if (db.checkpoints.some(cp => cp.source === "calendar" && cp.sourceRef === eventId)) return;
-    const { events, rules } = this.read();
+    const { events, rules, dismissals } = this.read();
     const event = events.find(e => e.id === eventId);
-    if (!event || Date.parse(event.end) > Date.now() ||
+    if (!event || Object.hasOwn(dismissals ?? {}, eventId) || Date.parse(event.end) > Date.now() ||
         !matchingQuests(event, rules, db.quests).some(q => q.id === questId)) {
       throw new Error("This event is no longer available for that quest.");
     }
@@ -132,6 +136,16 @@ export class LocalCalendarStore implements CalendarStore {
     db.checkpoints.push({ id: randomUUID(), questId, title: event.title.slice(0, 160), occurredAt: event.start,
       minutes, note: null, source: "calendar", sourceRef: eventId, isMilestone: false, createdAt: new Date().toISOString() });
     writeDb(db);
+  }
+
+  async dismissEvent(eventId: string) {
+    const data = this.read();
+    if (Object.hasOwn(data.dismissals ?? {}, eventId) ||
+        readDb().checkpoints.some(cp => cp.source === "calendar" && cp.sourceRef === eventId)) return;
+    const event = data.events.find(e => e.id === eventId);
+    if (!event || Date.parse(event.end) > Date.now()) throw new Error("This event is no longer available.");
+    data.dismissals = { ...data.dismissals, [eventId]: event.sourceId };
+    this.write(data);
   }
 
   async clear() {

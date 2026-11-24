@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { normalizeFeedUrl } from "@/lib/calendar/feed-url";
 import { calendarStore } from "@/lib/calendar/store";
+import { suggestedCheckpoints } from "@/lib/calendar/suggestions";
 import { syncCalendarSource } from "@/lib/calendar/sync";
-import { canConnectCalendar } from "@/lib/db/derive";
+import { canConnectCalendar, timezone } from "@/lib/db/derive";
 import { loadDb } from "@/lib/db/store";
 import { ATTRIBUTES } from "@/lib/game";
+import { formatInTimeZone } from "date-fns-tz";
 import { fail, text, type ActionResult } from "./run";
 
 const id = z.string().min(1).max(160);
@@ -28,6 +30,14 @@ const target = z.discriminatedUnion("kind", [
 ]);
 const taggingRule = z.object({ match: text(100, "Enter a word or phrase to match."), target });
 const confirmation = z.object({ eventId: id, questId: id });
+
+function ruleFields({ match, target }: z.output<typeof taggingRule>) {
+  return {
+    match,
+    questId: target.kind === "quest" ? target.id : null,
+    attribute: target.kind === "attribute" ? target.id : null,
+  };
+}
 
 async function change<S extends z.ZodType>(
   schema: S, input: unknown, apply: (data: z.output<S>, store: Awaited<ReturnType<typeof calendarStore>>) => Promise<string>,
@@ -79,10 +89,37 @@ export async function saveWakingHours(input: z.input<typeof hours>): Promise<Act
 }
 
 export async function addCalendarRule(input: z.input<typeof taggingRule>): Promise<ActionResult> {
-  return change(taggingRule, input, async ({ match, target }, store) => {
-    await store.addRule(match, target.kind === "quest" ? target.id : null, target.kind === "attribute" ? target.id : null);
+  return change(taggingRule, input, async (rule, store) => {
+    const { match, questId, attribute } = ruleFields(rule);
+    await store.addRule(match, questId, attribute);
     return "Event rule added";
   });
+}
+
+export type RulePreview = { id: string; title: string; date: string; quests: string[] };
+
+export async function previewCalendarRule(input: z.input<typeof taggingRule>): Promise<
+  { ok: true; matches: RulePreview[] } | Extract<ActionResult, { ok: false }>
+> {
+  const parsed = taggingRule.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  try {
+    const db = await loadDb();
+    if (!canConnectCalendar(db)) return { ok: false, error: "Calendar opens after your first weekly review." };
+    const calendar = await (await calendarStore()).load();
+    const hidden = new Set([...calendar.confirmedIds, ...(calendar.dismissedIds ?? [])]);
+    const rule = { id: "preview", ...ruleFields(parsed.data) };
+    const matches = suggestedCheckpoints(calendar.events, [rule], db.quests, new Date(), hidden)
+      .slice(0, 3)
+      .map(({ event, matches }) => ({
+        id: event.id, title: event.title,
+        date: formatInTimeZone(event.start, timezone(db), "d MMM, HH:mm"),
+        quests: matches.map(({ quest }) => quest.title),
+      }));
+    return { ok: true, matches };
+  } catch {
+    return { ok: false, error: "The rule preview could not be loaded. Try again." };
+  }
 }
 
 export async function removeCalendarRule(ruleId: string): Promise<ActionResult> {
@@ -97,5 +134,12 @@ export async function confirmSuggestion(input: z.input<typeof confirmation>): Pr
     await store.confirmEvent(eventId, questId);
     revalidatePath("/", "layout");
     return "Checkpoint logged";
+  });
+}
+
+export async function dismissSuggestion(eventId: string): Promise<ActionResult> {
+  return change(id, eventId, async (id, store) => {
+    await store.dismissEvent(id);
+    return "Suggestion dismissed";
   });
 }

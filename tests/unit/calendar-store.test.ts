@@ -78,3 +78,19 @@ it("invalidates old work and wipes the old events when Google is reconnected", a
   expect(state.source.lastSyncedAt).toBeNull();
   expect((await store.load()).events).toEqual([]);
 });
+
+it("keeps dismissed occurrences busy and hidden through refreshes until the source is removed", async () => {
+  const sourceId = await store.addSource("ics", "Training", secret);
+  await store.applySync(sourceId, 0, { events: [event], replace: true });
+  const eventId = (await store.load()).events[0].id;
+  await store.addRule("swim", "q", null);
+  await store.dismissEvent(eventId);
+  expect((await store.load()).events).toHaveLength(1);
+  await store.applySync(sourceId, 1, { events: [], replace: true });
+  await store.dismissEvent(eventId);
+  await store.applySync(sourceId, 2, { events: [event], replace: true });
+  await expect(store.confirmEvent(eventId, "q")).rejects.toThrow();
+  expect((await store.load()).dismissedIds).toEqual([eventId]);
+  await store.removeSource(sourceId);
+  expect((await store.load()).dismissedIds).toEqual([]);
+});
