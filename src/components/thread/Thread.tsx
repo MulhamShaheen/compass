@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { createCheckpoint, deleteCheckpoint, setQuestStatus, updateCheckpoint, updateQuest } from "@/lib/actions/quests";
 import { formatMinutes, TIME_OPTIONS } from "@/lib/copy";
@@ -22,9 +23,10 @@ function timeOptions(current: number) {
   return TIME_OPTIONS.some(([m]) => m === current) ? TIME_OPTIONS : [...TIME_OPTIONS, [current, formatMinutes(current)] as [number, string]].sort((a, b) => a[0] - b[0]);
 }
 
-export function CheckpointForm({ quest, nowInput }: { quest: ThreadView["quest"]; nowInput: string }) {
+export function CheckpointForm({ quest, nowInput, nextStep }: Pick<ThreadView, "quest" | "nowInput" | "nextStep">) {
+  const router = useRouter();
   const { go, pending, error } = useAction();
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(nextStep?.title ?? "");
   const [note, setNote] = useState("");
   const [occurredAt, setOccurredAt] = useState(nowInput);
   const [minutes, setMinutes] = useState(60);
@@ -32,12 +34,14 @@ export function CheckpointForm({ quest, nowInput }: { quest: ThreadView["quest"]
   return (
     <form
       className="cpform"
+      id="checkpoint"
       onSubmit={(e) => {
         e.preventDefault();
         if (!title.trim()) return;
         go(
-          () => createCheckpoint({ questId: quest.id, title, note, occurredAt, minutes, isMilestone }),
+          () => createCheckpoint({ questId: quest.id, title, note, occurredAt, minutes, isMilestone, nextStepId: nextStep?.id }),
           () => {
+            if (nextStep) router.replace(`/quests/${quest.id}#checkpoint`, { scroll: false });
             setTitle("");
             setNote("");
             setMilestone(false);
@@ -46,6 +50,7 @@ export function CheckpointForm({ quest, nowInput }: { quest: ThreadView["quest"]
       }}
     >
       <div className="label">Log a checkpoint</div>
+      {nextStep && <p>What happened? Edit your next step to record what you actually did.</p>}
       <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="What happened? e.g. Ran 8K without stopping" aria-label="Checkpoint title" />
       <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="Commentary: how it went, what you noticed, what's next" aria-label="Commentary" />
       <div className="row">

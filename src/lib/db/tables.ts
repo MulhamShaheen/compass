@@ -13,7 +13,7 @@ import type { Database, Tables } from "./types";
 
 type TableName = keyof Database["public"]["Tables"];
 type Row = Record<string, unknown>;
-type CollectionKey = "chapters" | "quests" | "checkpoints" | "habits" | "habitLogs" | "weather" | "journal" | "ratings" | "unlocks" | "reviews";
+type CollectionKey = "chapters" | "quests" | "checkpoints" | "nextSteps" | "habits" | "habitLogs" | "weather" | "journal" | "ratings" | "unlocks" | "reviews";
 
 const iso = (v: string | null | undefined): string | null => (v ? new Date(v).toISOString() : null);
 
@@ -48,6 +48,10 @@ export const SPECS: Spec[] = [
       primary_attr: q.primaryAttr, secondary_attr: q.secondaryAttr, started_on: q.startedOn,
       completed_at: q.completedAt, created_at: q.createdAt,
     }),
+  }),
+  spec({
+    key: "nextSteps", table: "today_next_steps", keyCols: ["id"], onConflict: "user_id",
+    toRow: (s, user_id) => ({ id: s.id, user_id, quest_id: s.questId, title: s.title, day: s.day }),
   }),
   spec({
     key: "checkpoints", table: "checkpoints", keyCols: ["id"], onConflict: "id",
@@ -127,6 +131,7 @@ export interface LoadedRows {
   chapters: Tables<"chapters">[];
   quests: Tables<"quests">[];
   checkpoints: Tables<"checkpoints">[];
+  today_next_steps: Tables<"today_next_steps">[];
   habits: Tables<"habits">[];
   habit_logs: Tables<"habit_logs">[];
   weather_logs: Tables<"weather_logs">[];
@@ -160,6 +165,7 @@ export function rowsToDb(r: LoadedRows): Db {
     primaryAttr: q.primary_attr, secondaryAttr: q.secondary_attr, startedOn: q.started_on,
     completedAt: iso(q.completed_at), createdAt: iso(q.created_at)!,
   }));
+  db.nextSteps = r.today_next_steps.map((s) => ({ id: s.id, questId: s.quest_id, title: s.title, day: s.day }));
   db.checkpoints = r.checkpoints.map((c) => ({
     id: c.id, questId: c.quest_id, occurredAt: iso(c.occurred_at)!, title: c.title, note: c.note,
     minutes: c.minutes, isMilestone: c.is_milestone, source: c.source, ...(c.source_ref ? { sourceRef: c.source_ref } : {}), createdAt: iso(c.created_at)!,
@@ -195,6 +201,7 @@ export function withUuids(db: Db, newId: () => string = () => crypto.randomUUID(
     ...db,
     chapters: db.chapters.map((c) => ({ ...c, id: fix(c.id) })),
     quests: db.quests.map((q) => ({ ...q, id: fix(q.id), chapterId: q.chapterId ? fix(q.chapterId) : null })),
+    nextSteps: db.nextSteps.map((s) => ({ ...s, id: fix(s.id), questId: fix(s.questId) })),
     checkpoints: db.checkpoints.map((c) => ({ ...c, id: fix(c.id), questId: fix(c.questId) })),
     habits: db.habits.map((h) => ({ ...h, id: fix(h.id) })),
     habitLogs: db.habitLogs.map((l) => ({ ...l, habitId: fix(l.habitId) })),

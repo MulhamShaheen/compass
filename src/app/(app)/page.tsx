@@ -48,7 +48,7 @@ export default async function MapPage() {
           />
         </div>
         <div className="col">
-          <TodayPanel loop={view.loop} weather={view.weather} todayLabel={view.header.todayLabel} />
+          <TodayPanel loop={view.loop} weather={view.weather} nextStep={view.nextStep} todayLabel={view.header.todayLabel} />
           {unlocked.habits ? (
             <HabitsPanel habits={view.habits} slots={view.habitSlots} reviews={view.reviewsCompleted} />
           ) : (

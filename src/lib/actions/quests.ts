@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { currentLevel, isUnlocked, timezone } from "../db/derive";
 import { ATTRIBUTES, canActivateQuest, checkpointPoints, splitByAttributes, ATTRIBUTE_NAMES } from "../game";
+import { NEXT_STEP_CHANGED } from "../db/store";
 import { dayKey, localInputToDate } from "../time";
 import { fail, optionalText, run, text, type ActionResult } from "./run";
 
@@ -52,6 +53,7 @@ export async function setQuestStatus(input: z.input<typeof statusInput>): Promis
       const slot = canActivateQuest(quest.type, db.quests, currentLevel(db), { excludeId: quest.id });
       if (!slot.ok) return fail(slot.reason);
     }
+    if (data.status !== "active") db.nextSteps = db.nextSteps.filter((s) => s.questId !== quest.id);
     quest.status = data.status;
     quest.completedAt = data.status === "done" ? now.toISOString() : null;
     const message =
@@ -69,12 +71,24 @@ const checkpointInput = z.object({
   isMilestone: z.boolean(),
 });
 
-export async function createCheckpoint(input: z.input<typeof checkpointInput>): Promise<ActionResult> {
-  return run(checkpointInput, input, (data, db, now) => {
+const createCheckpointInput = checkpointInput.extend({ nextStepId: z.uuid().optional() });
+
+export async function createCheckpoint(input: z.input<typeof createCheckpointInput>): Promise<ActionResult> {
+  return run(createCheckpointInput, input, (data, db, now) => {
+    if (data.nextStepId) {
+      const step = db.nextSteps[0];
+      const alreadyLogged = db.checkpoints.find((cp) =>
+        cp.id === data.nextStepId && cp.questId === data.questId && cp.sourceRef === `next-step:${data.nextStepId}`
+      );
+      if (alreadyLogged) return { ok: true, id: alreadyLogged.id, message: "Checkpoint already logged." };
+      if (step?.id !== data.nextStepId || step.questId !== data.questId) return fail(NEXT_STEP_CHANGED);
+    }
     const quest = db.quests.find((q) => q.id === data.questId);
     if (!quest || quest.type === "system") return fail("That quest could not be found.");
     if (quest.status === "done") return fail("This quest is complete. Reopen it to add to the story.");
-    const id = crypto.randomUUID();
+    if (data.nextStepId && (quest.type !== "main" || quest.status !== "active")) return fail(NEXT_STEP_CHANGED);
+    const id = data.nextStepId ?? crypto.randomUUID();
+    if (data.nextStepId) db.nextSteps = [];
     db.checkpoints.push({
       id,
       questId: quest.id,
@@ -84,6 +98,7 @@ export async function createCheckpoint(input: z.input<typeof checkpointInput>): 
       minutes: data.minutes,
       isMilestone: data.isMilestone,
       source: "manual",
+      ...(data.nextStepId ? { sourceRef: `next-step:${id}` } : {}),
       createdAt: now.toISOString(),
     });
     let resumed = "";

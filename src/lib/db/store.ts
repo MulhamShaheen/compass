@@ -1,4 +1,5 @@
 import "server-only";
+import { isDeepStrictEqual } from "node:util";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { isLocalMode } from "../supabase/env";
@@ -17,6 +18,9 @@ import { diffDb, profileToRow, rowsToDb, withUuids, type LoadedRows } from "./ta
  * query to that user. Writes are not one transaction: a failure midway can leave a
  * partial change, which the next save completes or the user retries.
  */
+
+export const NEXT_STEP_CHANGED = "Your next step changed. Open Today to see the latest version.";
+export class NextStepWriteError extends Error {}
 
 export class SignedOutError extends Error {
   constructor() {
@@ -46,13 +50,22 @@ async function fetchAll<T>(sb: AnyClient, table: string, userId: string): Promis
   }
 }
 
+async function loadNextSteps(sb: AnyClient, userId: string): Promise<LoadedRows["today_next_steps"]> {
+  const { data, error } = await sb.from("today_next_steps").select("*").eq("user_id", userId);
+  // The rest of Compass still works while the migration is awaiting deployment.
+  if (error?.code === "42P01" || error?.code === "PGRST205") return [];
+  if (error) throw new Error(`Could not load the next step: ${error.message}`);
+  return data;
+}
+
 async function loadRows(sb: AnyClient, userId: string): Promise<LoadedRows> {
-  const [profile, chapters, quests, checkpoints, habits, habit_logs, weather_logs, journal_entries, attribute_ratings, unlocks, weekly_reviews, prompts] =
+  const [profile, chapters, quests, checkpoints, today_next_steps, habits, habit_logs, weather_logs, journal_entries, attribute_ratings, unlocks, weekly_reviews, prompts] =
     await Promise.all([
       sb.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
       fetchAll(sb, "chapters", userId),
       fetchAll(sb, "quests", userId),
       fetchAll(sb, "checkpoints", userId),
+      loadNextSteps(sb, userId),
       fetchAll(sb, "habits", userId),
       fetchAll(sb, "habit_logs", userId),
       fetchAll(sb, "weather_logs", userId),
@@ -66,13 +79,38 @@ async function loadRows(sb: AnyClient, userId: string): Promise<LoadedRows> {
   if (prompts.error) throw new Error(`Could not load prompts: ${prompts.error.message}`);
   return {
     profile: profile.data,
-    chapters, quests, checkpoints, habits, habit_logs, weather_logs, journal_entries, attribute_ratings, unlocks, weekly_reviews,
+    chapters, quests, checkpoints, today_next_steps, habits, habit_logs, weather_logs, journal_entries, attribute_ratings, unlocks, weekly_reviews,
     prompts: prompts.data ?? [],
   } as LoadedRows;
 }
 
-async function writeChanges(sb: AnyClient, userId: string, before: Db, after: Db): Promise<void> {
+async function writeChanges(sb: AnyClient, userId: string, before: Db, after: Db, replacing = false): Promise<void> {
   const changes = diffDb(before, after, userId);
+  // Normal plan changes compare revisions in Postgres. The RPC commits a
+  // linked checkpoint with the removal of its plan in the same transaction.
+  const planChange = changes.find((c) => c.table === "today_next_steps");
+  const priorStep = before.nextSteps[0];
+  // A quest status update removes its plan via trigger in the same transaction.
+  const clearedByQuest = changes.find((c) => c.table === "quests")?.upserts.some(
+    (q) => q.id === priorStep?.questId && q.status !== "active"
+  );
+  if (planChange && !replacing) changes.splice(changes.indexOf(planChange), 1);
+  if (planChange && !replacing && !clearedByQuest) {
+    const expected = priorStep?.id ?? null;
+    const checkpoints = changes.find((c) => c.table === "checkpoints");
+    const checkpoint = checkpoints?.upserts.find((row) => row.id === expected && row.source_ref === `next-step:${expected}`);
+    const { data, error } = await sb.rpc("write_today_next_step", {
+      p_expected: expected,
+      p_step: planChange.upserts[0] ?? null,
+      p_checkpoint: checkpoint ?? null,
+    });
+    if (error?.code === "PGRST202" || error?.code === "42883") {
+      throw new NextStepWriteError("Next steps will be available once the database update is applied.");
+    }
+    if (error) throw new Error(`Could not save the next step: ${error.message}`);
+    if (!data) throw new NextStepWriteError(NEXT_STEP_CHANGED);
+    if (checkpoint && checkpoints) checkpoints.upserts = checkpoints.upserts.filter((row) => row !== checkpoint);
+  }
   // Children first for deletes, parents first for upserts.
   for (const c of [...changes].reverse()) {
     if (!c.deletes.length) continue;
@@ -109,13 +147,17 @@ async function importLegacy(sb: AnyClient, userId: string, current: Db): Promise
   if (error || !data?.doc) return null;
   const legacy = withUuids({ ...emptyDb(), ...(data.doc as Partial<Db>) });
   legacy.prompts = current.prompts;
-  await writeChanges(sb, userId, current, legacy);
+  await writeChanges(sb, userId, current, legacy, true);
   await sb.from("prototype_state").delete().eq("user_id", userId);
   return legacy;
 }
 
 export async function loadDb(): Promise<Db> {
-  if (isLocalMode()) return readDb();
+  if (isLocalMode()) {
+    const db = readDb();
+    snapshots.set(db, structuredClone(db));
+    return db;
+  }
   const user = await requireUser();
   const sb = (await createClient()) as unknown as AnyClient;
   const rows = await loadRows(sb, user.id);
@@ -136,12 +178,24 @@ export async function saveDb(db: Db, opts: { replacing?: Db } = {}): Promise<voi
     const { calendarStore } = await import("../calendar/store");
     await (await calendarStore()).clear();
   }
-  if (isLocalMode()) return writeDb(db);
+  if (isLocalMode()) {
+    const before = snapshots.get(db);
+    if (before && !opts.replacing) {
+      const current = readDb();
+      if (current.nextSteps[0]?.id !== before.nextSteps[0]?.id) throw new NextStepWriteError(NEXT_STEP_CHANGED);
+      if (db.nextSteps[0]?.id !== before.nextSteps[0]?.id && !isDeepStrictEqual(before, current)) {
+        throw new NextStepWriteError("Your character changed while saving. Please try again.");
+      }
+    }
+    writeDb(db);
+    snapshots.set(db, structuredClone(db));
+    return;
+  }
   const user = await requireUser();
   const before = snapshots.get(opts.replacing ?? db);
   if (!before) throw new Error("saveDb needs the Db returned by loadDb (or pass it as `replacing`).");
   const sb = (await createClient()) as unknown as AnyClient;
-  await writeChanges(sb, user.id, before, db);
+  await writeChanges(sb, user.id, before, db, !!opts.replacing);
   snapshots.set(db, structuredClone(db));
 }
 
