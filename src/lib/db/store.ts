@@ -132,6 +132,10 @@ export async function loadDb(): Promise<Db> {
  * over), pass the loaded one as `replacing` so the old rows can be removed.
  */
 export async function saveDb(db: Db, opts: { replacing?: Db } = {}): Promise<void> {
+  if (opts.replacing) {
+    const { calendarStore } = await import("../calendar/store");
+    await (await calendarStore()).clear();
+  }
   if (isLocalMode()) return writeDb(db);
   const user = await requireUser();
   const before = snapshots.get(opts.replacing ?? db);
@@ -153,7 +157,11 @@ export async function loadDbOrLogin(): Promise<Db> {
 
 /** Deletes the signed-in account and, through cascades, every row it owns. */
 export async function deleteAccount(): Promise<void> {
-  if (isLocalMode()) return writeDb(emptyDb());
+  if (isLocalMode()) {
+    const { LocalCalendarStore } = await import("../calendar/local");
+    await new LocalCalendarStore().clear();
+    return writeDb(emptyDb());
+  }
   await requireUser();
   const sb = await createClient();
   const { error } = await sb.rpc("delete_my_account");

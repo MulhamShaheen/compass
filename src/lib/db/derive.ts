@@ -54,6 +54,11 @@ export function isUnlocked(db: Db, feature: Feature): boolean {
   return db.unlocks.some((u) => u.feature === feature);
 }
 
+/** Earlier sample characters completed reviews before the calendar feature was available. */
+export function canConnectCalendar(db: Db): boolean {
+  return isUnlocked(db, "calendar") || db.reviews.length > 0;
+}
+
 /**
  * Runs after every action: records newly met unlocks and writes each one as a
  * checkpoint in the Prologue quest, so the start of the story can be read back.

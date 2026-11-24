@@ -1,4 +1,5 @@
 import { loadDb, SignedOutError } from "@/lib/db/store";
+import { calendarStore } from "@/lib/calendar/store";
 
 export const dynamic = "force-dynamic";
 
@@ -7,8 +8,10 @@ export async function GET() {
   try {
     const { dev: _dev, ...data } = await loadDb();
     void _dev;
-    return new Response(JSON.stringify({ exportedAt: new Date().toISOString(), ...data }, null, 2), {
+    const calendar = await (await calendarStore()).load();
+    return new Response(JSON.stringify({ exportedAt: new Date().toISOString(), ...data, calendar }, null, 2), {
       headers: {
+        "cache-control": "private, no-store",
         "content-type": "application/json",
         "content-disposition": `attachment; filename="compass-export.json"`,
       },

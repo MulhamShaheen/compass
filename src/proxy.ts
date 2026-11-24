@@ -13,9 +13,11 @@ export async function proxy(request: NextRequest) {
   if (isLocalMode()) return NextResponse.next();
 
   const { pathname, searchParams } = request.nextUrl;
+  // The scheduled job authenticates its bearer token in the route handler.
+  if (pathname === "/api/cron/calendar-sync") return NextResponse.next();
 
   // If Supabase falls back to the Site URL, the magic-link code lands on "/". Finish it here.
-  if (searchParams.has("code") && !pathname.startsWith("/auth/")) {
+  if (pathname === "/" && searchParams.has("code")) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/callback";
     return NextResponse.redirect(url);

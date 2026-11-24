@@ -33,6 +33,18 @@ export interface Database {
         "character_name" | "true_north" | "timezone" | "waking_start" | "waking_end" | "quiet_mode" | "prologue_completed_at" | "created_at" | "dev_day_offset"
       >;
       prototype_state: Table<{ user_id: string; doc: Json; updated_at: string }, "user_id" | "updated_at">;
+      calendar_sources: Table<
+        { id: string; user_id: string; kind: "ics" | "google"; label: string; last_synced_at: string | null },
+        "id" | "last_synced_at"
+      >;
+      calendar_events: Table<
+        { id: string; user_id: string; source_id: string; external_id: string; title: string; starts_at: string; ends_at: string },
+        never
+      >;
+      calendar_rules: Table<
+        { id: string; user_id: string; match_text: string; quest_id: string | null; attr: AttributeEnum | null },
+        "id" | "user_id" | "quest_id" | "attr"
+      >;
       chapters: Table<
         { id: string; user_id: string; title: string; started_on: string; ended_on: string | null; summary: string | null },
         "id" | "user_id" | "started_on" | "ended_on" | "summary"
@@ -93,6 +105,17 @@ export interface Database {
     };
     Views: { [_ in never]: never };
     Functions: {
+      calendar_connect: { Args: { p_user: string; p_kind: "ics" | "google"; p_name: string; p_secret: string }; Returns: string };
+      calendar_sync_read: {
+        Args: { p_user: string; p_id: string };
+        Returns: { id: string; kind: "ics" | "google"; name: string; lastSyncedAt: string | null; secret: string; cursor_value: string | null; version: number; timezone: string }[];
+      };
+      calendar_sync_apply: {
+        Args: { p_user: string; p_id: string; p_version: number; p_events: Json; p_deleted: string[]; p_replace: boolean; p_cursor: string | null };
+        Returns: boolean;
+      };
+      calendar_confirm: { Args: { p_event: string; p_quest: string }; Returns: undefined };
+      calendar_clear: { Args: Record<string, never>; Returns: undefined };
       delete_my_account: { Args: Record<string, never>; Returns: undefined };
     };
     Enums: {

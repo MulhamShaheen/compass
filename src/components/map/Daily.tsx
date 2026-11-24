@@ -192,6 +192,9 @@ export function UnlockCards({ fresh }: { fresh: MapView["fresh"] }) {
                 Open the review
               </Link>
             )}
+            {u.feature === "calendar" && (
+              <Link className="btn" href="/calendar">Open Time</Link>
+            )}
             <button className="btn ghost" disabled={pending} onClick={() => go(() => dismissUnlock({ feature: u.feature }))}>
               Got it
             </button>
