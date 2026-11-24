@@ -499,7 +499,7 @@ header::after {
 .prompt::before { content: "> " / ""; color: var(--red); }
 .entries { display: grid; gap: 14px; max-height: 360px; overflow: auto; padding-right: 6px; align-content: start; }
 .entry { border-left: 2px solid color-mix(in srgb, var(--accent) 45%, var(--line)); padding-left: 12px; display: grid; gap: 3px; }
-.entry p { margin: 0; font-size: 15px; max-width: 65ch; }
+.entry p { margin: 0; font-size: 15px; max-width: 65ch; white-space: pre-wrap; overflow-wrap: anywhere; }
 .entry .meta { display: flex; gap: 10px; font: 400 11px var(--mono); color: var(--label); letter-spacing: 0.08em; text-transform: uppercase; }
 .entry .q { color: var(--muted); font: 400 12px var(--mono); }
 .entries::-webkit-scrollbar { width: 4px; }

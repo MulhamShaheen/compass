@@ -91,6 +91,7 @@ test("a new character plays the Prologue, then the map opens over the first week
   await nextDay(page);
   await expect(page.getByRole("heading", { name: "Where life goes", level: 2 })).toBeVisible();
   await page.getByRole("link", { name: "Weekly review" }).first().click();
+  await expect(page.getByRole("heading", { name: "Calendar reflection" })).toHaveCount(0);
   await page.getByLabel("Next week").fill("More runs, earlier nights.");
   await page.getByRole("button", { name: "Finish the review" }).click();
   await page.waitForURL((u) => u.pathname === "/");

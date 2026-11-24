@@ -49,10 +49,11 @@ export function ReviewQuests({ quests, slots, sideUnlocked }: Pick<ReviewView, "
   );
 }
 
-export function ReviewFinish({ baseline }: { baseline: ReviewView["baseline"] }) {
+export function ReviewFinish({ baseline, calendarReflection }: { baseline: ReviewView["baseline"]; calendarReflection: boolean }) {
   const router = useRouter();
   const { go, pending, error } = useAction();
   const [note, setNote] = useState("");
+  const [nextCheckpoint, setNextCheckpoint] = useState("");
   const [rerate, setRerate] = useState(false);
   const [ratings, setRatings] = useState<Partial<Record<Attribute, number>>>({});
   return (
@@ -60,11 +61,20 @@ export function ReviewFinish({ baseline }: { baseline: ReviewView["baseline"] })
       style={{ display: "grid", gap: 12 }}
       onSubmit={(e) => {
         e.preventDefault();
-        go(() => completeWeeklyReview({ note, ratings: rerate ? ratings : {} }), () => router.push("/"));
+        go(() => completeWeeklyReview({
+          note, nextCheckpoint: calendarReflection ? nextCheckpoint : undefined, ratings: rerate ? ratings : {},
+        }), () => router.push("/"));
       }}
     >
       <div className="prompt">What will next week be about?</div>
       <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="A few lines. It goes into your logbook." aria-label="Next week" />
+      {calendarReflection && (
+        <label className="field">
+          <span>Next checkpoint idea (optional)</span>
+          <input type="text" value={nextCheckpoint} maxLength={160} onChange={(e) => setNextCheckpoint(e.target.value)} />
+          <small>What would you like to make room for? The idea is saved with this logbook entry.</small>
+        </label>
+      )}
       <label className="check">
         <input type="checkbox" checked={rerate} onChange={(e) => setRerate(e.target.checked)} /> Rate the five attributes again (optional)
       </label>

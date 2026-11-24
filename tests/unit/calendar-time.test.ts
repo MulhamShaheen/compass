@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calendarWeek } from "@/lib/game/time";
+import { calendarWeek, reviewCalendarTime } from "@/lib/game/time";
 
 const opts = { now: new Date("2026-11-01T22:00:00Z"), tz: "Europe/Moscow" };
 
@@ -48,5 +48,32 @@ describe("calendar time", () => {
   it("requires four full weeks when the caller supplies a sync boundary", () => {
     expect(calendarWeek([], { ...opts, coverageStart: "2026-10-06" }).averageFreeMinutes).toBeNull();
     expect(calendarWeek([], { ...opts, coverageStart: "2026-10-05" }).averageFreeMinutes).toBe(7 * 960);
+  });
+});
+
+describe("weekly review calendar time", () => {
+  const sync = "2026-11-01T21:00:00Z";
+  const events = [
+    { start: "2026-10-29T07:00:00+03:00", end: "2026-10-29T10:00:00+03:00" },
+    { start: "2026-10-29T09:00:00+03:00", end: "2026-10-29T11:00:00+03:00" },
+    { start: "2026-11-01", end: "2026-11-02" },
+  ];
+
+  it("looks back at the entire prior week on the local Monday", () => {
+    expect(reviewCalendarTime(events, { ...opts, week: "2026-10-26", lastSyncs: [sync] }))
+      .toEqual({ through: "2026-11-01", freeMinutes: 7 * 960 - 4 * 60 - 960 });
+  });
+
+  it("counts only completed dates when reviewing before the end of the week", () => {
+    const now = new Date("2026-11-01T12:00:00Z");
+    expect(reviewCalendarTime(events, { ...opts, now, week: "2026-10-26", lastSyncs: [now.toISOString()] }))
+      .toEqual({ through: "2026-10-31", freeMinutes: 6 * 960 - 4 * 60 });
+  });
+
+  it("skips the reflection if there have been no completed days or a source is stale", () => {
+    expect(reviewCalendarTime([], { ...opts, week: "2026-11-02", lastSyncs: [sync] })).toBeNull();
+    for (const lastSyncs of [[], [sync, null], [sync, "2026-10-30T12:00:00Z"]]) {
+      expect(reviewCalendarTime([], { ...opts, week: "2026-10-26", lastSyncs })).toBeNull();
+    }
   });
 });
