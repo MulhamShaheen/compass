@@ -37,7 +37,7 @@ import {
   type Weather,
 } from "./game";
 import { appNow, isUnlocked, playableCheckpoints, prologueQuest, timezone, unlockState } from "./db/derive";
-import type { Db, Quest } from "./db/schema";
+import type { Db, NextStep, Quest } from "./db/schema";
 import { dateToLocalInput, dayKey, formatDay, formatTime, formatToday, relativeDay, type DayKey } from "./time";
 
 /**
@@ -89,6 +89,11 @@ export interface MapView {
     weeks: { label: string; tipLabel: string; hours: Record<Attribute, number>; total: number }[];
   };
   quests: QuestRowView[];
+  nextStep: {
+    quests: Pick<QuestRowView, "id" | "title" | "last">[];
+    plan: NextStep | null;
+    today: DayKey;
+  };
   prologueId: string | null;
   slots: { main: { used: number; max: number }; side: { used: number; max: number } };
   loop: TodayLoop;
@@ -174,6 +179,7 @@ export function buildMap(db: Db): MapView {
   const level = characterLevel(totalPoints(all)).level;
   const activeQuests = db.quests.filter((q) => q.type !== "system" && q.status === "active");
   const slots = questSlots(level);
+  const quests = questRows(db, now);
 
   const baseline = (attr: Attribute) =>
     db.ratings.filter((r) => r.attribute === attr && r.context === "baseline").at(-1)?.rating ?? null;
@@ -214,7 +220,12 @@ export function buildMap(db: Db): MapView {
         total: w.total,
       })),
     },
-    quests: questRows(db, now),
+    quests,
+    nextStep: {
+      quests: quests.filter((q) => q.type === "main" && q.status === "active").map(({ id, title, last }) => ({ id, title, last })),
+      plan: db.nextSteps[0] ?? null,
+      today,
+    },
     prologueId: prologueQuest(db)?.id ?? null,
     slots: {
       main: { used: activeQuests.filter((q) => q.type === "main").length, max: slots.main },
@@ -281,6 +292,7 @@ export interface ThreadView {
   stats: QuestStats & { startedLabel: string };
   timeline: TimelineItem[];
   nowInput: string;
+  nextStep: NextStep | null;
 }
 
 export function buildThread(db: Db, id: string): ThreadView | null {
@@ -306,6 +318,7 @@ export function buildThread(db: Db, id: string): ThreadView | null {
       primaryAttr: quest.primaryAttr,
       secondaryAttr: quest.secondaryAttr,
     },
+    nextStep: db.nextSteps.find((step) => step.questId === id) ?? null,
     stats: { ...questStats(quest, system ? [] : cps, today), checkpoints: cps.length, startedLabel: formatDay(quest.startedOn, today) },
     timeline: cps.map((c, i) => {
       const prev = cps[i + 1];

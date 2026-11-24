@@ -71,6 +71,7 @@ export interface Database {
         },
         "id" | "user_id" | "chapter_id" | "status" | "why" | "secondary_attr" | "started_on" | "completed_at" | "created_at"
       >;
+      today_next_steps: Table<{ user_id: string; id: string; quest_id: string; title: string; day: string }, never>;
       checkpoints: Table<
         {
           id: string;
@@ -106,6 +107,7 @@ export interface Database {
     };
     Views: { [_ in never]: never };
     Functions: {
+      write_today_next_step: { Args: { p_expected: string | null; p_step: Json; p_checkpoint: Json }; Returns: boolean };
       calendar_connect: { Args: { p_user: string; p_kind: "ics" | "google"; p_name: string; p_secret: string }; Returns: string };
       calendar_sync_read: {
         Args: { p_user: string; p_id: string };

@@ -9,6 +9,7 @@ import type { MapView } from "@/lib/view";
 import { WeatherIcon } from "../bits";
 import { Decode } from "../fx";
 import { useAction } from "../Toast";
+import { TodayNextStep } from "./TodayNextStep";
 
 const STEPS = [
   ["checkin", "Morning check-in", "Set your inner weather below"],
@@ -16,7 +17,7 @@ const STEPS = [
   ["log", "Evening logbook", "Write one entry"],
 ] as const;
 
-export function TodayPanel({ loop, weather, todayLabel }: Pick<MapView, "loop" | "weather"> & { todayLabel: string }) {
+export function TodayPanel({ loop, weather, todayLabel, nextStep }: Pick<MapView, "loop" | "weather" | "nextStep"> & { todayLabel: string }) {
   const { go, pending } = useAction();
   return (
     <section className="panel" aria-labelledby="today-h">
@@ -46,6 +47,7 @@ export function TodayPanel({ loop, weather, todayLabel }: Pick<MapView, "loop" |
           </button>
         ))}
       </div>
+      <TodayNextStep key={nextStep.plan?.id ?? nextStep.quests[0]?.id} {...nextStep} />
     </section>
   );
 }

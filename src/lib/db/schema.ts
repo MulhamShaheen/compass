@@ -45,6 +45,14 @@ export interface Quest {
   createdAt: string;
 }
 
+/** One optional plan per character. Each revision receives a fresh id. */
+export interface NextStep {
+  id: string;
+  questId: string;
+  title: string;
+  day: DayKey;
+}
+
 export interface Checkpoint {
   id: string;
   questId: string;
@@ -106,6 +114,7 @@ export interface Db {
   ratings: AttributeRating[];
   quests: Quest[];
   checkpoints: Checkpoint[];
+  nextSteps: NextStep[];
   habits: Habit[];
   habitLogs: HabitLog[];
   weather: WeatherLog[];
@@ -126,6 +135,7 @@ export function emptyDb(): Db {
     ratings: [],
     quests: [],
     checkpoints: [],
+    nextSteps: [],
     habits: [],
     habitLogs: [],
     weather: [],

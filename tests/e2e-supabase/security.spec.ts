@@ -13,6 +13,7 @@ const TABLES = [
   "attribute_ratings",
   "unlocks",
   "weekly_reviews",
+  "today_next_steps",
   "prototype_state",
   "calendar_sources",
   "calendar_events",
@@ -79,6 +80,30 @@ test.describe("access rules", () => {
     const mine = await rest(`quests?id=eq.${questId}&select=title`, s.a.token);
     expect(mine.body).toEqual([{ title: "A's secret quest" }]);
     await rest(`quests?id=eq.${questId}`, s.a.token, { method: "DELETE" });
+  });
+
+  test("a next step is visible only to the person who planned it", async () => {
+    const { a, b } = readSessions();
+    const quest = await rest("quests", b.token, {
+      method: "POST",
+      body: JSON.stringify({ type: "main", title: "Practice piano", primary_attr: "craft" }),
+    });
+    expect(quest.status).toBe(201);
+    const questId = (quest.body as { id: string }[])[0].id;
+    try {
+      const step = { id: crypto.randomUUID(), quest_id: questId, title: "Play one scale", day: "2026-11-24" };
+      const saved = await rest("rpc/write_today_next_step", b.token, {
+        method: "POST",
+        body: JSON.stringify({ p_expected: null, p_step: step, p_checkpoint: null }),
+      });
+      expect(saved.status).toBe(200);
+      expect(saved.body).toBe(true);
+      const path = `today_next_steps?select=title&id=eq.${step.id}`;
+      expect((await rest(path, b.token)).body).toEqual([{ title: step.title }]);
+      expect((await rest(path, a.token)).body).toEqual([]);
+    } finally {
+      await rest(`quests?id=eq.${questId}`, b.token, { method: "DELETE" });
+    }
   });
 
   test("a private calendar stays with its owner through sync, confirmation and disconnect", async () => {

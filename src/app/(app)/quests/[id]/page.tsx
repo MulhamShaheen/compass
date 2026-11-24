@@ -8,12 +8,16 @@ import { buildThread } from "@/lib/view";
 
 export const dynamic = "force-dynamic";
 
-export default async function QuestPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function QuestPage({ params, searchParams }: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ step?: string | string[] }>;
+}) {
+  const [{ id }, { step }] = await Promise.all([params, searchParams]);
   const view = buildThread(await loadDbOrLogin(), id);
   if (!view) notFound();
   const { quest, stats } = view;
   const system = quest.type === "system";
+  const nextStep = step === view.nextStep?.id ? view.nextStep : null;
 
   return (
     <main className="panel" style={{ maxWidth: 820, width: "100%", justifySelf: "center" }}>
@@ -65,7 +69,19 @@ export default async function QuestPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
         {system && <p className="insight">The story of how you started. Each unlock and review adds a line here. It earns no points.</p>}
-        {!system && quest.status !== "done" && <CheckpointForm key={view.timeline.length} quest={quest} nowInput={view.nowInput} />}
+        {step !== undefined && !nextStep ? (
+          <div className="cpform" id="checkpoint">
+            <p>This next step has changed. Open Today to see your current step.</p>
+            <div className="actions">
+              <Link className="btn ghost" href="/">Back to Today</Link>
+              {!system && quest.status !== "done" && (
+                <Link className="link" href={`/quests/${id}#checkpoint`}>Log a separate checkpoint</Link>
+              )}
+            </div>
+          </div>
+        ) : !system && quest.status !== "done" && (
+          <CheckpointForm key={`${view.timeline.length}-${nextStep?.id ?? "manual"}`} quest={quest} nowInput={view.nowInput} nextStep={nextStep} />
+        )}
         <QuestActions quest={quest} />
         <div>
           <div className="label" style={{ marginBottom: 10 }}>

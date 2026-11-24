@@ -2,7 +2,7 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { appNow, syncUnlocks } from "../db/derive";
-import { loadDb, saveDb, SignedOutError } from "../db/store";
+import { loadDb, saveDb, SignedOutError, NextStepWriteError, NEXT_STEP_CHANGED } from "../db/store";
 import type { Db } from "../db/schema";
 import { UNLOCK_COPY } from "../game";
 
@@ -31,9 +31,18 @@ export async function run<S extends z.ZodType>(
   }
   const now = appNow(db);
   const result = fn(parsed.data, db, now);
-  if (!result.ok) return result;
+  if (!result.ok) {
+    if (result.error === NEXT_STEP_CHANGED) revalidatePath("/", "layout");
+    return result;
+  }
   const fresh = syncUnlocks(db, now);
-  await saveDb(db);
+  try {
+    await saveDb(db);
+  } catch (e) {
+    if (!(e instanceof NextStepWriteError)) throw e;
+    revalidatePath("/", "layout");
+    return fail(e.message);
+  }
   revalidatePath("/", "layout");
   if (fresh.length && !result.message) {
     return { ...result, message: `Unlocked: ${fresh.map((f) => UNLOCK_COPY[f].title).join(", ")}` };

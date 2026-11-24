@@ -3,6 +3,7 @@
 A gamified life dashboard. Life is one storyline: main and side quests run for months, checkpoints record the story, and five attributes show where your time goes. It includes habits, a daily inner-weather check-in and a reflective logbook.
 
 - Product spec: [docs/PRODUCT.md](docs/PRODUCT.md)
+- Daily flow and iteration notes: [docs/DAILY_FLOW.md](docs/DAILY_FLOW.md)
 - Implementation plan: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
 - Prototype: [docs/prototype/compass.html](docs/prototype/compass.html) (open in a browser)
 - Instructions for Claude Code: [CLAUDE.md](CLAUDE.md)

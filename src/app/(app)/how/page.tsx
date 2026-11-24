@@ -59,6 +59,7 @@ export default function HowPage() {
           </li>
           <li>
             <b>Move a thread.</b> Log at least one checkpoint on any quest.
+            {" "}If you have an idea for later, save it on Today. Choose <b>Log what happened</b> when you’re ready to record it.
           </li>
           <li>
             <b>Evening logbook.</b> Answer one question.
