@@ -56,26 +56,24 @@ test("reflect on a checkpoint and find its context in the logbook and export", a
   await expect(journal.getByText(entries[0].prompt!, { exact: true })).toBeVisible();
 });
 
-test("an overnight reflection draft can still be saved under a daily question", async ({ page, context }) => {
+test("an overnight reflection draft can still be saved under a daily question", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Load sample character" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Sample character loaded" })).toBeVisible();
   const journal = page.getByRole("region", { name: "Logbook" });
   await journal.getByRole("button", { name: "Reflect on a checkpoint" }).click();
   const draft = journal.getByRole("textbox", { name: "Logbook entry" });
   const body = "I want to remember what I learned yesterday.";
   await draft.fill(body);
 
-  const nextMorning = await context.newPage();
-  await nextMorning.goto("/");
-  const day = nextMorning.getByLabel("Prototype tools").getByText(/^Day \d+$/);
+  const day = page.getByLabel("Prototype tools").getByText(/^Day \d+$/);
   const previousDay = await day.innerText();
-  await nextMorning.getByRole("button", { name: "Next day" }).click();
+  await page.getByRole("button", { name: "Next day" }).click();
   await expect(day).not.toHaveText(previousDay);
-  await nextMorning.close();
 
   const save = journal.getByRole("button", { name: "Log entry" });
-  await save.click();
-  await expect(journal.getByRole("alert")).toContainText("no longer available");
+  await expect(save).toBeDisabled();
+  await expect(journal.getByRole("combobox", { name: "Today’s checkpoint" }).locator("option:checked")).toContainText("no longer available");
   await expect(draft).toHaveValue(body);
   await journal.getByRole("button", { name: "Back to daily question" }).click();
   await save.click();
