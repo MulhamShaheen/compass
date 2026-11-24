@@ -503,6 +503,9 @@ header::after {
 
 /* ---------- logbook ---------- */
 .journal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.journal form { display: grid; gap: 10px; min-width: 0; overflow-wrap: anywhere; }
+.reflection-checkpoint { display: grid; gap: 6px; min-width: 0; }
+.reflection-checkpoint select { width: 100%; min-width: 0; }
 @media (max-width: 760px) { .journal { grid-template-columns: minmax(0, 1fr); } }
 .prompt { font: 700 20px/1.3 var(--display); color: var(--accent); letter-spacing: 0.02em; text-shadow: 0 0 14px var(--glow-accent); }
 .prompt::before { content: "> " / ""; color: var(--red); }
@@ -510,7 +513,7 @@ header::after {
 .entry { border-left: 2px solid color-mix(in srgb, var(--accent) 45%, var(--line)); padding-left: 12px; display: grid; gap: 3px; }
 .entry p { margin: 0; font-size: 15px; max-width: 65ch; white-space: pre-wrap; overflow-wrap: anywhere; }
 .entry .meta { display: flex; gap: 10px; font: 400 11px var(--mono); color: var(--label); letter-spacing: 0.08em; text-transform: uppercase; }
-.entry .q { color: var(--muted); font: 400 12px var(--mono); }
+.entry .q { color: var(--muted); font: 400 12px var(--mono); overflow-wrap: anywhere; }
 .entries::-webkit-scrollbar { width: 4px; }
 .entries::-webkit-scrollbar-thumb { background: var(--accent); }
 

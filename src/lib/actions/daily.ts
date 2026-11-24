@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { isUnlocked, timezone } from "../db/derive";
-import { canAddHabit, WEATHERS, WEATHER_NAMES } from "../game";
+import { canAddHabit, dailyReflection, reflectionQuestion, WEATHERS, WEATHER_NAMES } from "../game";
 import { dayKey } from "../time";
 import { fail, optionalText, run, text, type ActionResult } from "./run";
 
@@ -53,15 +53,27 @@ export async function archiveHabit(input: z.input<typeof idInput>): Promise<Acti
   });
 }
 
-const journalInput = z.object({ body: text(8000, "Write a few lines first."), prompt: optionalText(300) });
+const journalInput = z.object({
+  body: text(8000, "Write a few lines first."),
+  prompt: optionalText(300),
+  checkpointId: z.string().min(1).optional(),
+});
 
 export async function createJournalEntry(input: z.input<typeof journalInput>): Promise<ActionResult> {
   return run(journalInput, input, (data, db, now) => {
-    const day = dayKey(now, timezone(db));
+    const tz = timezone(db);
+    const day = dayKey(now, tz);
+    let prompt = data.prompt;
+    if (data.checkpointId) {
+      const { reflectionCheckpoints, trueNorth } = dailyReflection(db, day, tz);
+      const checkpoint = reflectionCheckpoints.find((c) => c.id === data.checkpointId);
+      if (!checkpoint) return fail("That checkpoint is no longer available for today’s reflection. Choose another or use a regular question.");
+      prompt = `${checkpoint.questTitle} · ${checkpoint.title} — ${reflectionQuestion(trueNorth)}`;
+    }
     db.journal.push({
       id: crypto.randomUUID(),
       day,
-      prompt: data.prompt,
+      prompt,
       body: data.body,
       weather: db.weather.find((w) => w.day === day)?.weather ?? null,
       createdAt: now.toISOString(),

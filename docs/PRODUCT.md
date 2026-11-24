@@ -92,6 +92,7 @@ Each unlock is triggered by **play, not by time**, with a time fallback so nobod
 
 - **Daily (2 minutes):** check in on the weather, move one thread, answer one question.
 - **Optional next step:** Today shows the active main quest and its latest checkpoint. You can leave yourself one idea for what to do next. **Log what happened** opens that quest’s checkpoint form with the idea filled in. Edit it to describe what happened. On a later day, you can keep, change or let go of the idea. Points and the daily loop still come from the checkpoint you save.
+- **Evening reflection:** The logbook lets you choose a checkpoint that happened today and reflect on how it related to your True North. The entry keeps the quest and checkpoint names as you knew them when you wrote it.
 - **Weekly review (5 minutes):** (1) look at where life went this week against your True North, (2) choose quests to pause, resume or begin, (3) write one logbook entry: "What will next week be about?"
 - **Chapter close (post-MVP):** write a summary, see the chapter in numbers, and name the next chapter.
 
