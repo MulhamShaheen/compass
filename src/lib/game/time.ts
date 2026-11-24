@@ -1,4 +1,4 @@
-import { addDays, dateToLocalInput, dayKey, localInputToDate, weekStart, type DayKey } from "../time";
+import { addDays, dateToLocalInput, dayKey, daysBetween, localInputToDate, weekStart, type DayKey } from "../time";
 
 interface BusyEvent {
   start: string;
@@ -93,5 +93,22 @@ export function calendarWeek(events: readonly BusyEvent[], opts: TimeOptions) {
     freeMinutes: days.reduce((sum, d) => sum + d.freeMinutes, 0),
     busyMinutes: days.reduce((sum, d) => sum + d.busyMinutes, 0),
     averageFreeMinutes: hasHistory ? previousFree / 4 : null,
+  };
+}
+
+/** A review looks back at completed local days using recently synced calendars. */
+export function reviewCalendarTime(
+  events: readonly BusyEvent[],
+  opts: Omit<TimeOptions, "coverageStart"> & { week: DayKey; lastSyncs: readonly (string | null)[] },
+) {
+  const completedDays = Math.min(7, daysBetween(opts.week, dayKey(opts.now, opts.tz)));
+  const oldestSync = opts.now.getTime() - 48 * 60 * MINUTE;
+  if (completedDays <= 0 || !opts.lastSyncs.length ||
+      !opts.lastSyncs.every((time) => Date.parse(time ?? "") >= oldestSync)) return null;
+
+  const week = calendarWeek(events, { ...opts, now: localInputToDate(opts.week + "T12:00", opts.tz) });
+  return {
+    through: addDays(opts.week, completedDays - 1),
+    freeMinutes: week.days.slice(0, completedDays).reduce((sum, day) => sum + day.freeMinutes, 0),
   };
 }

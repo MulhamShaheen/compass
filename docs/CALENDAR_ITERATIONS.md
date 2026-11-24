@@ -32,7 +32,7 @@ These are proposals for later iterations. Pick one question to try with a real w
 | Explain and preview tagging rules | Show the matching phrase, candidate quest, and three recent matches while editing a rule. | Can someone spot a rule that will suggest the wrong events? |
 | Snooze or dismiss suggestions | Hide one occurrence or defer it to the weekly review. | Do people feel comfortable leaving an event unlogged? |
 | Busy-only calendar privacy | Offer a per-source option to discard titles and retain intervals. | Will users include sensitive calendars when titles stay private? |
-| Weekly reflection on planned and lived time | Ask whether one free block felt usable, or which planned moment became a meaningful checkpoint. | Does a calendar observation produce a reflection worth keeping? |
+| Memorable planned moments | Ask which scheduled activity became a checkpoint worth remembering. | Does looking back at planned time reveal a moment the user wants to keep? |
 | True North reflection | Invite the user to choose one checkpoint that expressed their True North, or name a next checkpoint from a logbook intention. | Does the review reconnect the week to a personal goal? |
 | Leave room in the week | Let the user reserve a discretionary buffer or mark time intentionally unplanned. | Does the weekly estimate feel realistic without pressure to fill it? |
 | Quest choices that fit a free block | Offer active quests for a block the user selects. Scheduling remains their choice. | Does this make it easier to choose a manageable next action? |
@@ -40,3 +40,11 @@ These are proposals for later iterations. Pick one question to try with a real w
 | Resume a quest from the logbook | Link a past reflection to its paused quest. | Does an old entry help someone return to a thread on their own terms? |
 | Chapter review | Show the first and most recent checkpoints together at chapter close. | Can the user describe a change they would otherwise miss? |
 | Recurring work hours | Explore weekday work schedules and exceptions for people whose calendars omit working time. | Do waking hours and imported events adequately explain available time? |
+
+## Iteration 5 — Weekly calendar reflection
+
+The weekly review asks how much of the open time on the calendar felt usable. It shows only completed days in the review’s date range, using the profile timezone, waking hours and the existing calculation for overlapping events. The prompt appears when all connected calendars have synced in the last 48 hours. The regular review can be completed if calendar data is unavailable.
+
+An optional next checkpoint idea goes into the existing weekly logbook note as an intention. The calendar reflection displays the free-time total and the dates it covers.
+
+This iteration branches from `main` and can be reviewed and merged independently of the suggestion controls in PR #2. It uses the existing calendar tables and adds no migration.

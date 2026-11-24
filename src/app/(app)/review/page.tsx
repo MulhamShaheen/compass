@@ -1,11 +1,13 @@
 import { ShareBars } from "@/components/map/WhereLifeGoes";
 import { ReviewFinish, ReviewQuests } from "@/components/ReviewForms";
 import { LockedCard } from "@/components/bits";
-import { appNow, isUnlocked, timezone } from "@/lib/db/derive";
+import { calendarStore } from "@/lib/calendar/store";
+import { formatMinutes } from "@/lib/copy";
+import { appNow, canConnectCalendar, isUnlocked, timezone, unlockState } from "@/lib/db/derive";
 import { loadDbOrLogin } from "@/lib/db/store";
 import { lockedHint, reviewWeekFor } from "@/lib/game";
-import { unlockState } from "@/lib/db/derive";
-import { addDays, dayKey } from "@/lib/time";
+import { reviewCalendarTime } from "@/lib/game/time";
+import { addDays, dayKey, formatDay } from "@/lib/time";
 import { buildReview } from "@/lib/view";
 
 export const dynamic = "force-dynamic";
@@ -16,8 +18,19 @@ export default async function ReviewPage() {
   if (!isUnlocked(db, "weekly_review")) {
     return <LockedCard title="Weekly review" hint={lockedHint("weekly_review", unlockState(db, now))} />;
   }
-  const week = reviewWeekFor(dayKey(now, timezone(db)));
+  const tz = timezone(db);
+  const today = dayKey(now, tz);
+  const week = reviewWeekFor(today);
   const view = buildReview(db, week, addDays(week, 7));
+  // A failed or unconfigured calendar must still allow the weekly review.
+  const calendar = !view.alreadyDone && canConnectCalendar(db)
+    ? await calendarStore().then((store) => store.load()).catch(() => null)
+    : null;
+  const reflection = calendar && reviewCalendarTime(calendar.events, {
+    week, now: new Date(), tz,
+    wakingStart: calendar.wakingStart, wakingEnd: calendar.wakingEnd,
+    lastSyncs: calendar.sources.map((source) => source.lastSyncedAt),
+  });
 
   return (
     <main className="panel" style={{ maxWidth: 760, width: "100%", justifySelf: "center" }}>
@@ -38,6 +51,18 @@ export default async function ReviewPage() {
             <p className="why">{view.header.trueNorth}</p>
             <ShareBars rows={view.rows} />
             <p className="insight">{view.insight} Does that match where you are heading?</p>
+            {reflection && (
+              <div>
+                <h4>Calendar reflection</h4>
+                <p className="insight">
+                  Your calendar showed <strong>{formatMinutes(reflection.freeMinutes)} free</strong> during waking hours{" "}
+                  {reflection.through === week
+                    ? `on ${formatDay(week, today)}`
+                    : `from ${formatDay(week, today)} to ${formatDay(reflection.through, today)}`}.
+                  How much of that time felt usable?
+                </p>
+              </div>
+            )}
           </section>
           <section style={{ display: "grid", gap: 10 }}>
             <div className="step-h">
@@ -52,7 +77,7 @@ export default async function ReviewPage() {
               <span className="n">3 / 3</span>
               <h3>One line for the logbook</h3>
             </div>
-            <ReviewFinish baseline={view.baseline} />
+            <ReviewFinish baseline={view.baseline} calendarReflection={reflection !== null} />
           </section>
         </div>
       )}

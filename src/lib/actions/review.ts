@@ -8,6 +8,7 @@ import { fail, optionalText, run, type ActionResult } from "./run";
 
 const reviewInput = z.object({
   note: optionalText(8000),
+  nextCheckpoint: optionalText(160),
   ratings: z.partialRecord(z.enum(ATTRIBUTES), z.number().int().min(1).max(5)).default({}),
 });
 
@@ -20,13 +21,15 @@ export async function completeWeeklyReview(input: z.input<typeof reviewInput>): 
     const week = reviewWeekFor(today);
     if (db.reviews.some((r) => r.weekStart === week)) return fail("This week is already reviewed. See you next week.");
     const at = now.toISOString();
-    db.reviews.push({ id: crypto.randomUUID(), weekStart: week, note: data.note, completedAt: at });
-    if (data.note) {
+    const idea = data.nextCheckpoint ? `Next checkpoint idea — ${data.nextCheckpoint}` : null;
+    const note = [data.note, idea].filter(Boolean).join("\n\n") || null;
+    db.reviews.push({ id: crypto.randomUUID(), weekStart: week, note, completedAt: at });
+    if (note) {
       db.journal.push({
         id: crypto.randomUUID(),
         day: today,
         prompt: REVIEW_PROMPT,
-        body: data.note,
+        body: note,
         weather: db.weather.find((w) => w.day === today)?.weather ?? null,
         createdAt: at,
       });
@@ -38,7 +41,7 @@ export async function completeWeeklyReview(input: z.input<typeof reviewInput>): 
     if (prologue) {
       db.checkpoints.push({
         id: crypto.randomUUID(), questId: prologue.id, occurredAt: at, title: `Weekly review · week of ${week}`,
-        note: data.note, minutes: 0, isMilestone: db.reviews.length === 1, source: "system", createdAt: at,
+        note, minutes: 0, isMilestone: db.reviews.length === 1, source: "system", createdAt: at,
       });
     }
     return { ok: true, message: `Week reviewed. You now have ${habitSlots(db.reviews.length)} habit slots.` };
