@@ -18,6 +18,6 @@ Pausing or finishing the quest clears its open note. A form left open in another
 
 ### Deployment
 
-With the PR checked out and the target Supabase database configured in `.env`, run `npm run db:migrate` before deploying the app. The local file store supports the same flow without account setup.
+The Today plan landed in [PR #4](https://github.com/MulhamShaheen/compass/pull/4). Run `npm run db:migrate` against the target Supabase database before deploying if it still needs the Today plan migration. The local file store supports the same flow without account setup.
 
 The phone tests cover returning to a saved plan, editing the actual result, all three later-day choices and an older tab trying to log a replaced plan. An isolated PostgreSQL check exercised owner-only reads, rollback after a failed checkpoint save and retrying a successful save.
