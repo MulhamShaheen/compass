@@ -3,6 +3,8 @@ import { expect, test } from "@playwright/test";
 test("events work with a quest and calendar-file export without Google", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Load sample character" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Sample character loaded" })).toBeVisible();
+  await page.reload();
   await expect(page.getByRole("link", { name: /Run a 10K/ })).toBeVisible();
   await page.getByRole("link", { name: /Run a 10K/ }).click();
   const questPoints = page.getByTestId("quest-points");
