@@ -4,11 +4,12 @@ import {
   evaluateUnlocks,
   totalPoints,
   UNLOCK_COPY,
+  REVIEW_PROMPT,
   type Feature,
   type UnlockState,
 } from "../game";
 import { dayKey } from "../time";
-import type { Db, Quest } from "./schema";
+import type { Db, JournalEntry, Quest } from "./schema";
 
 const DAY_MS = 86_400_000;
 
@@ -86,4 +87,8 @@ export function syncUnlocks(db: Db, now: Date): Feature[] {
     }
   }
   return fresh;
+}
+
+export function isReviewEntry(db: Db, entry: JournalEntry): boolean {
+  return entry.prompt === REVIEW_PROMPT && db.reviews.some((r) => r.completedAt === entry.createdAt);
 }

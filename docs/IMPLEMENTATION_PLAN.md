@@ -36,7 +36,7 @@ Vitest covers the rules and server behavior. Playwright exercises the first week
 | M8 | Read-only ICS and primary Google Calendar sync, free-time estimates, tagging, preview, and dismissal |
 | Daily flow | Weekly calendar reflection and one optional next step on Today |
 
-**In review:** Evening checkpoint reflection adds an optional prompt based on a checkpoint that occurred today. It saves the quest and checkpoint titles with the entry. [PR #5](https://github.com/MulhamShaheen/compass/pull/5)
+Evening checkpoint reflection landed in [PR #5](https://github.com/MulhamShaheen/compass/pull/5). The [daily flow notes](DAILY_FLOW.md) cover writing, revisiting entries, and managing checkpoints and habits.
 
 ### Hosted release checks
 

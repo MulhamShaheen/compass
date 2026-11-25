@@ -11,6 +11,7 @@ import type { MapView } from "@/lib/view";
 import { WeatherIcon } from "../bits";
 import { Decode } from "../fx";
 import { useAction } from "../Toast";
+import { JournalCard } from "./JournalCard";
 import { TodayNextStep } from "./TodayNextStep";
 
 const STEPS = [
@@ -35,7 +36,9 @@ export function TodayPanel({ loop, weather, todayLabel, nextStep }: Pick<MapView
             </span>
             <div>
               {title}
-              <small>{sub}</small>
+              <small>{key === "log" ? (
+                <a className="link" href="#journal-body">{loop.log ? "Write another entry" : sub}</a>
+              ) : sub}</small>
             </div>
           </div>
         ))}
@@ -57,6 +60,7 @@ export function TodayPanel({ loop, weather, todayLabel, nextStep }: Pick<MapView
 export function HabitsPanel({ habits, slots, reviews }: { habits: MapView["habits"]; slots: number; reviews: number }) {
   const { go, pending, error } = useAction();
   const [name, setName] = useState("");
+  const [archiveId, setArchiveId] = useState<string | null>(null);
   const [kind, setKind] = useState<"keep" | "starve">(habits.some((h) => h.kind === "keep") ? "starve" : "keep");
   const row = (h: MapView["habits"][number]) => (
     <div className={`habit${h.kind === "starve" ? " bad" : ""}`} key={h.id}>
@@ -65,7 +69,7 @@ export function HabitsPanel({ habits, slots, reviews }: { habits: MapView["habit
         <small>
           {h.kind === "keep" ? (h.streak ? `· ${h.streak}-day streak` : "") : `· ${h.clean} clean days of 7`}
         </small>
-        <button className="link put" onClick={() => go(() => archiveHabit({ id: h.id }))} aria-label={`Put away ${h.name}`}>
+        <button className="link put" id={`archive-${h.id}`} aria-expanded={archiveId === h.id} disabled={pending} onClick={() => setArchiveId(archiveId === h.id ? null : h.id)} aria-label={`Put away ${h.name}`}>
           put away
         </button>
       </div>
@@ -83,6 +87,21 @@ export function HabitsPanel({ habits, slots, reviews }: { habits: MapView["habit
           <i key={i} className={on ? "y" : ""} />
         ))}
       </div>
+      {archiveId === h.id && (
+        <div style={{ gridColumn: "1 / -1" }} role="group" aria-label={`Put away ${h.name}?`}>
+          <p>Put away {h.name}? Your past check-ins stay in your history and the habit slot becomes available.</p>
+          <div className="actions">
+            <button type="button" className="btn ghost" disabled={pending} onClick={() => {
+              setArchiveId(null);
+              document.getElementById(`archive-${h.id}`)?.focus();
+            }}>Keep tracking</button>
+            <button type="button" className="link" disabled={pending} onClick={() => go(() => archiveHabit({ id: h.id }), () => {
+              setArchiveId(null);
+              document.getElementById("habits-h")?.focus();
+            })}>Put away habit</button>
+          </div>
+        </div>
+      )}
     </div>
   );
   const keep = habits.filter((h) => h.kind === "keep");
@@ -90,7 +109,7 @@ export function HabitsPanel({ habits, slots, reviews }: { habits: MapView["habit
   return (
     <section className="panel" aria-labelledby="habits-h">
       <div className="panel-h">
-        <h2 id="habits-h">Habits</h2>
+        <h2 id="habits-h" tabIndex={-1}>Habits</h2>
         <span className="label">last 7 days</span>
       </div>
       <div className="habits">
@@ -173,7 +192,7 @@ export function Logbook({ journal }: { journal: MapView["journal"] }) {
             </>
           )}
           <div className="prompt" id="journal-prompt">{reflecting ? reflectionQuestion(journal.trueNorth) : prompt}</div>
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} disabled={pending} placeholder="Write a few lines. Nobody grades this." aria-label="Logbook entry" aria-describedby="journal-prompt" />
+          <textarea id="journal-body" value={body} onChange={(e) => setBody(e.target.value)} disabled={pending} placeholder="Write a few lines. Nobody grades this." aria-label="Logbook entry" aria-describedby="journal-prompt" />
           <div className="actions">
             <button className="btn" type="submit" disabled={pending || !body.trim() || (reflecting && !selected)}>
               Log entry
@@ -193,18 +212,9 @@ export function Logbook({ journal }: { journal: MapView["journal"] }) {
           </div>
           {reflecting && error && <p className="error" role="alert">{error}</p>}
         </form>
-        <div className="entries" role="region" aria-label="Saved entries" tabIndex={journal.entries.length ? 0 : undefined}>
+        <div className="entries" role="region" aria-label="Saved entries" tabIndex={journal.entries.length ? 0 : -1}>
           {journal.entries.length === 0 && <p className="empty">Your entries will gather here.</p>}
-          {journal.entries.map((j) => (
-            <div className="entry" key={j.id}>
-              <div className="meta">
-                <span className="mono">{j.day}</span>
-                {j.weather && <span>{WEATHER_NAMES[j.weather]}</span>}
-              </div>
-              {j.prompt && <div className="q">{j.prompt}</div>}
-              <p>{j.body}</p>
-            </div>
-          ))}
+          {journal.entries.map((entry) => <JournalCard entry={entry} key={entry.id} />)}
         </div>
       </div>
     </section>

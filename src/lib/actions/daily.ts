@@ -1,5 +1,7 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { writeJournalEntry, JournalWriteError, SignedOutError } from "../db/store";
 import { z } from "zod";
 import { isUnlocked, timezone } from "../db/derive";
 import { canAddHabit, dailyReflection, reflectionQuestion, WEATHERS, WEATHER_NAMES } from "../game";
@@ -78,6 +80,27 @@ export async function createJournalEntry(input: z.input<typeof journalInput>): P
       weather: db.weather.find((w) => w.day === day)?.weather ?? null,
       createdAt: now.toISOString(),
     });
-    return { ok: true, message: "Logged" };
+    return { ok: true, message: "Entry saved to your logbook." };
   });
+}
+
+const entryChange = z.object({
+  id: z.string().min(1),
+  expected: z.string(),
+  body: text(8000, "Write a few lines first.").nullable(),
+});
+
+export async function changeJournalEntry(input: z.input<typeof entryChange>): Promise<ActionResult> {
+  const parsed = entryChange.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0].message);
+  const { id, expected, body } = parsed.data;
+  try {
+    const written = await writeJournalEntry(id, expected, body);
+    revalidatePath("/", "layout");
+    if (!written) return fail("This entry changed. Close the editor and reopen the latest version.");
+    return { ok: true, message: body === null ? "Entry deleted." : "Entry updated." };
+  } catch (e) {
+    if (e instanceof JournalWriteError || e instanceof SignedOutError) return fail(e.message);
+    throw e;
+  }
 }
