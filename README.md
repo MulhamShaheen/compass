@@ -45,5 +45,6 @@ On the hosted app, compare free time against a real iCloud feed and confirm a ma
 - [Product spec](docs/PRODUCT.md) covers the experience, scoring, onboarding, and calendar behavior.
 - [Implementation plan](docs/IMPLEMENTATION_PLAN.md) tracks what landed, release checks, and the proposed Chapter Review.
 - [Daily flow notes](docs/DAILY_FLOW.md) and [calendar iteration notes](docs/CALENDAR_ITERATIONS.md) record the decisions and checks behind each change.
+- [Events and Google publishing](docs/EVENTS.md) covers points, calendar files, and the optional Google connection.
 - [Original prototype](docs/prototype/compass.html) captures the early interaction design.
 - [Contributor guidance](CLAUDE.md) describes engineering and design conventions.

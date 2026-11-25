@@ -88,6 +88,14 @@ export interface Database {
         },
         "id" | "user_id" | "note" | "minutes" | "is_milestone" | "source" | "source_ref" | "created_at"
       >;
+      compass_events: Table<
+        {
+          id: string; user_id: string; title: string; note: string | null; starts_at: string; ends_at: string;
+          quest_id: string | null; checkpoint_id: string | null; attribute: AttributeEnum;
+          completed_at: string | null; created_at: string; revision: number;
+        },
+        "id" | "user_id" | "note" | "quest_id" | "checkpoint_id" | "completed_at" | "created_at" | "revision"
+      >;
       habits: Table<
         { id: string; user_id: string; name: string; kind: "keep" | "starve"; archived_at: string | null; created_at: string },
         "id" | "user_id" | "archived_at" | "created_at"

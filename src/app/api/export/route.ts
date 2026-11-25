@@ -3,7 +3,7 @@ import { calendarStore } from "@/lib/calendar/store";
 
 export const dynamic = "force-dynamic";
 
-/** All of the character's data as JSON. Points are not included: they are always computed from checkpoints. */
+/** All of the character's data as JSON. Points are not included: they are derived from recorded activity. */
 export async function GET() {
   try {
     const { dev: _dev, ...data } = await loadDb();

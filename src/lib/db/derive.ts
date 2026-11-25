@@ -32,7 +32,7 @@ export function playableCheckpoints(db: Db) {
 }
 
 export function currentLevel(db: Db): number {
-  return characterLevel(totalPoints(attributeTotals(db.quests, db.checkpoints))).level;
+  return characterLevel(totalPoints(attributeTotals(db.quests, db.checkpoints, { events: db.events }))).level;
 }
 
 export function unlockState(db: Db, now: Date): UnlockState {
@@ -45,7 +45,7 @@ export function unlockState(db: Db, now: Date): UnlockState {
     checkinDays: new Set(db.weather.map((w) => w.day)).size,
     checkpoints: cps.length,
     questsWithCheckpoints: new Set(cps.map((c) => c.questId)).size,
-    totalPoints: totalPoints(attributeTotals(db.quests, db.checkpoints)),
+    totalPoints: totalPoints(attributeTotals(db.quests, db.checkpoints, { events: db.events })),
     journalEntries: db.journal.length,
     weeklyReviews: db.reviews.length,
   };

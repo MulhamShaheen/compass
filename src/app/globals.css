@@ -773,3 +773,15 @@ header::after {
 .calendar-week td:nth-child(2) { width: 48%; padding-inline: 8px; }
 .calendar-meter { width: 100%; height: 8px; background: color-mix(in srgb, var(--accent) 35%, var(--panel)); }
 .calendar-meter i { display: block; height: 100%; background: var(--brass); }
+
+.event-page { width: min(100%, 840px); min-width: 0; justify-self: center; display: grid; gap: 16px; }
+.event-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.event-card { min-width: 0; border: 1px solid var(--line); border-left: 2px solid var(--accent); padding: 12px; display: grid; gap: 7px; overflow-wrap: anywhere; }
+.event-detail { margin: 0; color: var(--muted); font-size: 13px; }
+.event-note { white-space: pre-wrap; }
+.event-form fieldset { margin: 0; padding: 0; border: 0; min-width: 0; display: grid; gap: 10px; }
+.event-form label { display: grid; gap: 4px; min-width: 0; }
+.event-form label[hidden] { display: none; }
+.event-form input, .event-form select, .event-form textarea { width: 100%; min-width: 0; }
+.event-form-row { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); }
+.event-removal { display: grid; gap: 7px; border-top: 1px solid var(--line); padding-top: 8px; }

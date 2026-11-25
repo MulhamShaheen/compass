@@ -13,7 +13,8 @@ export default async function QuestPage({ params, searchParams }: {
   searchParams: Promise<{ step?: string | string[] }>;
 }) {
   const [{ id }, { step }] = await Promise.all([params, searchParams]);
-  const view = buildThread(await loadDbOrLogin(), id);
+  const db = await loadDbOrLogin();
+  const view = buildThread(db, id);
   if (!view) notFound();
   const { quest, stats } = view;
   const system = quest.type === "system";
@@ -83,6 +84,17 @@ export default async function QuestPage({ params, searchParams }: {
           <CheckpointForm key={`${view.timeline.length}-${nextStep?.id ?? "manual"}`} quest={quest} nowInput={view.nowInput} nextStep={nextStep} />
         )}
         <QuestActions quest={quest} />
+        {!system && <Link className="link" href={`/events?quest=${encodeURIComponent(id)}#add-event`}>Add event to this quest</Link>}
+        {!system && db.events.some((event) => event.questId === id) && (
+          <section aria-label="Linked events">
+            <h3>Linked events</h3>
+            <ul>
+              {db.events.filter((event) => event.questId === id).map((event) => (
+                <li key={event.id}><Link className="link" href={`/events#event-${event.id}`}>{event.title}</Link></li>
+              ))}
+            </ul>
+          </section>
+        )}
         <div>
           <div className="label" style={{ marginBottom: 10 }}>
             The thread so far

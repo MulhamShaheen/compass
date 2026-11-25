@@ -2,7 +2,7 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { appNow, syncUnlocks } from "../db/derive";
-import { loadDb, saveDb, SignedOutError, NextStepWriteError, NEXT_STEP_CHANGED } from "../db/store";
+import { loadDb, saveDb, SignedOutError, EventWriteError, NextStepWriteError, NEXT_STEP_CHANGED } from "../db/store";
 import type { Db } from "../db/schema";
 import { UNLOCK_COPY } from "../game";
 
@@ -39,7 +39,7 @@ export async function run<S extends z.ZodType>(
   try {
     await saveDb(db);
   } catch (e) {
-    if (!(e instanceof NextStepWriteError)) throw e;
+    if (!(e instanceof NextStepWriteError) && !(e instanceof EventWriteError)) throw e;
     revalidatePath("/", "layout");
     return fail(e.message);
   }

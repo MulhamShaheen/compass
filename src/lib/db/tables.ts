@@ -13,7 +13,7 @@ import type { Database, Tables } from "./types";
 
 type TableName = keyof Database["public"]["Tables"];
 type Row = Record<string, unknown>;
-type CollectionKey = "chapters" | "quests" | "checkpoints" | "nextSteps" | "habits" | "habitLogs" | "weather" | "journal" | "ratings" | "unlocks" | "reviews";
+type CollectionKey = "chapters" | "quests" | "checkpoints" | "nextSteps" | "events" | "habits" | "habitLogs" | "weather" | "journal" | "ratings" | "unlocks" | "reviews";
 
 const iso = (v: string | null | undefined): string | null => (v ? new Date(v).toISOString() : null);
 
@@ -58,6 +58,14 @@ export const SPECS: Spec[] = [
     toRow: (c, user_id) => ({
       id: c.id, user_id, quest_id: c.questId, occurred_at: c.occurredAt, title: c.title, note: c.note,
       minutes: c.minutes, is_milestone: c.isMilestone, source: c.source, ...(c.sourceRef ? { source_ref: c.sourceRef } : {}), created_at: c.createdAt,
+    }),
+  }),
+  spec({
+    key: "events", table: "compass_events", keyCols: ["id"], onConflict: "id",
+    toRow: (event, user_id) => ({
+      id: event.id, user_id, title: event.title, note: event.note,
+      starts_at: event.startsAt, ends_at: event.endsAt, quest_id: event.questId, checkpoint_id: event.checkpointId,
+      attribute: event.attribute, completed_at: event.completedAt, created_at: event.createdAt, revision: event.revision,
     }),
   }),
   spec({
@@ -131,6 +139,7 @@ export interface LoadedRows {
   chapters: Tables<"chapters">[];
   quests: Tables<"quests">[];
   checkpoints: Tables<"checkpoints">[];
+  compass_events: Tables<"compass_events">[];
   today_next_steps: Tables<"today_next_steps">[];
   habits: Tables<"habits">[];
   habit_logs: Tables<"habit_logs">[];
@@ -170,6 +179,11 @@ export function rowsToDb(r: LoadedRows): Db {
     id: c.id, questId: c.quest_id, occurredAt: iso(c.occurred_at)!, title: c.title, note: c.note,
     minutes: c.minutes, isMilestone: c.is_milestone, source: c.source, ...(c.source_ref ? { sourceRef: c.source_ref } : {}), createdAt: iso(c.created_at)!,
   }));
+  db.events = r.compass_events.map((e) => ({
+    id: e.id, title: e.title, note: e.note, startsAt: iso(e.starts_at)!, endsAt: iso(e.ends_at)!,
+    questId: e.quest_id, checkpointId: e.checkpoint_id, attribute: e.attribute,
+    completedAt: iso(e.completed_at), createdAt: iso(e.created_at)!, revision: e.revision,
+  }));
   db.habits = r.habits.map((h) => ({ id: h.id, name: h.name, kind: h.kind, archivedAt: iso(h.archived_at), createdAt: iso(h.created_at)! }));
   db.habitLogs = r.habit_logs.map((l) => ({ habitId: l.habit_id, day: l.day }));
   db.weather = r.weather_logs.map((w) => ({ day: w.day, weather: w.weather as Weather }));
@@ -203,6 +217,11 @@ export function withUuids(db: Db, newId: () => string = () => crypto.randomUUID(
     quests: db.quests.map((q) => ({ ...q, id: fix(q.id), chapterId: q.chapterId ? fix(q.chapterId) : null })),
     nextSteps: db.nextSteps.map((s) => ({ ...s, id: fix(s.id), questId: fix(s.questId) })),
     checkpoints: db.checkpoints.map((c) => ({ ...c, id: fix(c.id), questId: fix(c.questId) })),
+    events: db.events.map((event) => ({
+      ...event, id: fix(event.id),
+      questId: event.questId ? fix(event.questId) : null,
+      checkpointId: event.checkpointId ? fix(event.checkpointId) : null,
+    })),
     habits: db.habits.map((h) => ({ ...h, id: fix(h.id) })),
     habitLogs: db.habitLogs.map((l) => ({ ...l, habitId: fix(l.habitId) })),
     journal: db.journal.map((j) => ({ ...j, id: fix(j.id) })),
