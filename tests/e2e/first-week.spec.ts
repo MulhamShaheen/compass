@@ -115,3 +115,18 @@ test("the sample character shows the full map", async ({ page }) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
 });
+
+test("putting a habit away keeps its check-in history", async ({ page }) => {
+  await page.getByRole("button", { name: "Load sample character" }).click();
+  const archive = page.getByRole("button", { name: "Put away Morning walk" });
+  await archive.click();
+  await page.getByRole("button", { name: "Keep tracking" }).click();
+  await expect(archive).toBeFocused();
+  await archive.click();
+  await page.getByRole("button", { name: "Put away habit", exact: true }).click();
+  await expect(archive).toHaveCount(0);
+  const data: import("../../src/lib/db/schema").Db = await (await page.request.get("/api/export")).json();
+  const walk = data.habits.find((habit) => habit.name === "Morning walk");
+  expect(walk?.archivedAt).toBeTruthy();
+  expect(data.habitLogs.some((log) => log.habitId === walk?.id)).toBe(true);
+});

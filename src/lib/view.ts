@@ -38,9 +38,9 @@ import {
   type TodayLoop,
   type Weather,
 } from "./game";
-import { appNow, isUnlocked, playableCheckpoints, prologueQuest, timezone, unlockState } from "./db/derive";
+import { appNow, isReviewEntry, isUnlocked, playableCheckpoints, prologueQuest, timezone, unlockState } from "./db/derive";
 import type { Db, NextStep, Quest } from "./db/schema";
-import { dateToLocalInput, dayKey, formatDay, formatTime, formatToday, relativeDay, type DayKey } from "./time";
+import { addDays, dateToLocalInput, dayKey, formatDay, formatTime, formatToday, relativeDay, type DayKey } from "./time";
 
 /**
  * View models for the screens. Every number is computed by src/lib/game;
@@ -115,7 +115,7 @@ export interface MapView {
     prompts: string[];
     startIndex: number;
     rotates: boolean;
-    entries: { id: string; day: string; weather: Weather | null; prompt: string | null; body: string }[];
+    entries: { id: string; day: string; isReview: boolean; weather: Weather | null; prompt: string | null; body: string }[];
   };
   reviewDue: boolean;
 }
@@ -188,6 +188,7 @@ export function buildMap(db: Db): MapView {
 
   const weeks = weeklyHours(db.quests, db.checkpoints, { now, tz });
   // Only checkpoints the user logged move a thread; "The quest begins" is added by the app.
+  const yesterday = addDays(today, -1);
   const cpDays = playableCheckpoints(db)
     .filter((c) => c.source !== "system")
     .flatMap((c) => [dayKey(new Date(c.createdAt), tz), dayKey(new Date(c.occurredAt), tz)]);
@@ -259,7 +260,10 @@ export function buildMap(db: Db): MapView {
       rotates: unlocked.prompts_rotate,
       entries: [...db.journal]
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .map((j) => ({ id: j.id, day: formatDay(j.day, today), weather: j.weather, prompt: j.prompt, body: j.body })),
+        .map((j) => {
+          const prefix = j.day === today ? "Today · " : j.day === yesterday ? "Yesterday · " : "";
+          return { id: j.id, day: prefix + formatDay(j.day, today), isReview: isReviewEntry(db, j), weather: j.weather, prompt: j.prompt, body: j.body };
+        }),
     },
     reviewDue: unlocked.weekly_review && shouldPromptReview(today, db.reviews.map((r) => r.weekStart)),
   };

@@ -107,6 +107,7 @@ export interface Database {
     };
     Views: { [_ in never]: never };
     Functions: {
+      write_journal_entry: { Args: { p_id: string; p_expected: string; p_body: string | null }; Returns: boolean };
       write_today_next_step: { Args: { p_expected: string | null; p_step: Json; p_checkpoint: Json }; Returns: boolean };
       calendar_connect: { Args: { p_user: string; p_kind: "ics" | "google"; p_name: string; p_secret: string }; Returns: string };
       calendar_sync_read: {

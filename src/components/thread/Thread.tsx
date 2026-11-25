@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createCheckpoint, deleteCheckpoint, setQuestStatus, updateCheckpoint, updateQuest } from "@/lib/actions/quests";
 import { formatMinutes, TIME_OPTIONS } from "@/lib/copy";
 import { checkpointPoints, splitByAttributes } from "@/lib/game/points";
@@ -86,88 +86,93 @@ function EditCheckpoint({ item, quest, onDone }: { item: TimelineItem; quest: Qu
   const [occurredAt, setOccurredAt] = useState(item.localInput);
   const [minutes, setMinutes] = useState(item.minutes);
   const [isMilestone, setMilestone] = useState(item.isMilestone);
+  const changed = title.trim() !== item.title || note.trim() !== (item.note ?? "") ||
+    occurredAt !== item.localInput || minutes !== item.minutes || isMilestone !== item.isMilestone;
   return (
     <form
       className="edit"
+      aria-label={`Edit ${item.title}`}
       onSubmit={(e) => {
         e.preventDefault();
         go(() => updateCheckpoint({ id: item.id, title, note, occurredAt, minutes, isMilestone }), onDone);
       }}
     >
-      <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="Checkpoint title" />
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} aria-label="Commentary" />
+      <label className="checkpoint-field">Checkpoint title
+        <input autoFocus required maxLength={160} value={title} onChange={(e) => setTitle(e.target.value)} disabled={pending} />
+      </label>
+      <label className="checkpoint-field">Commentary
+        <textarea maxLength={4000} value={note} onChange={(e) => setNote(e.target.value)} disabled={pending} />
+      </label>
       <div className="row">
-        <input type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} aria-label="Date and time" />
-        <select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} aria-label="Time spent">
-          {timeOptions(item.minutes).map(([m, label]) => (
-            <option key={m} value={m}>
-              {label}
-            </option>
-          ))}
-        </select>
+        <label className="checkpoint-field">Date and time
+          <input required type="datetime-local" value={occurredAt} onChange={(e) => setOccurredAt(e.target.value)} disabled={pending} />
+        </label>
+        <label className="checkpoint-field">Time spent
+          <select value={minutes} onChange={(e) => setMinutes(Number(e.target.value))} disabled={pending}>
+            {timeOptions(item.minutes).map(([m, label]) => <option key={m} value={m}>{label}</option>)}
+          </select>
+        </label>
         <label className="ms">
-          <input type="checkbox" checked={isMilestone} onChange={(e) => setMilestone(e.target.checked)} /> Milestone
+          <input type="checkbox" checked={isMilestone} onChange={(e) => setMilestone(e.target.checked)} disabled={pending} /> Milestone
         </label>
       </div>
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <span className="preview">Earns {earns(quest, minutes, isMilestone)}</span>
-        <span style={{ display: "flex", gap: 8 }}>
-          <button className="btn ghost" type="button" onClick={onDone}>
-            Cancel
-          </button>
-          <button className="btn" type="submit" disabled={pending || !title.trim()}>
-            Save
-          </button>
-        </span>
+      <span className="preview">Earns {earns(quest, minutes, isMilestone)}</span>
+      <div className="actions">
+        <button className="btn" type="submit" disabled={pending || !changed || !title.trim()}>
+          {pending ? "Saving…" : "Save changes"}
+        </button>
+        <button className="link" type="button" disabled={pending} onClick={onDone}>Cancel</button>
       </div>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
     </form>
   );
 }
 
-function TimelineEntry({ item, quest, index }: { item: TimelineItem; quest: QuestAttrs; index: number }) {
-  const { go, pending } = useAction();
-  const [editing, setEditing] = useState(false);
-  const [armed, setArmed] = useState(false);
+function TimelineEntry({ item, quest, index, onRemoved }: {
+  item: TimelineItem; quest: QuestAttrs; index: number; onRemoved: () => void;
+}) {
+  const { go, pending, error } = useAction();
+  const [mode, setMode] = useState<"read" | "edit" | "remove">("read");
+  const heading = useRef<HTMLHeadingElement>(null);
+  function close() {
+    setMode("read");
+    heading.current?.focus();
+  }
   return (
     <li className={`cp${item.isMilestone ? " ms" : ""}`} style={{ "--k": Math.min(index, 12) } as React.CSSProperties}>
-      <div className="rail">
-        <span className="dot" />
-      </div>
+      <div className="rail"><span className="dot" /></div>
       <div className="body">
         <div className="when">
-          <span>
-            {item.dateLabel} · {item.timeLabel}
-          </span>
+          <span>{item.dateLabel} · {item.timeLabel}</span>
           <span>{item.rel}</span>
           {item.isMilestone && <span style={{ color: "var(--brass)" }}>Milestone</span>}
         </div>
-        <h4>{item.title}</h4>
-        {item.note && <p>{item.note}</p>}
-        {editing ? (
-          <EditCheckpoint item={item} quest={quest} onDone={() => setEditing(false)} />
-        ) : (
-          !item.isSystem && (
-            <div className="gain">
-              {item.minutes > 0 && <span className="mono">{formatMinutes(item.minutes)}</span>}
-              {item.gain.map(([a, v]) => (
-                <AttrTag key={a} attr={a}>
-                  +{v} {ATTRIBUTE_NAMES[a]}
-                </AttrTag>
-              ))}
-              <button className="link" onClick={() => setEditing(true)}>
-                Edit
-              </button>
-              <button
-                className="link"
-                disabled={pending}
-                onClick={() => (armed ? go(() => deleteCheckpoint({ id: item.id })) : setArmed(true))}
-                onBlur={() => setArmed(false)}
-              >
-                {armed ? "Click again to remove" : "Remove"}
+        <h4 tabIndex={-1} ref={heading}>{item.title}</h4>
+        {mode !== "edit" && item.note && <p>{item.note}</p>}
+        {mode === "edit" && <EditCheckpoint item={item} quest={quest} onDone={close} />}
+        {mode === "remove" && (
+          <div className="checkpoint-confirm" role="group" aria-label={`Remove ${item.title}?`}>
+            <strong>Remove “{item.title}”?</strong>
+            <p>Its time and points will be removed from your totals.</p>
+            <div className="actions">
+              <button className="btn ghost" autoFocus disabled={pending} onClick={close}>Keep checkpoint</button>
+              <button className="link" disabled={pending}
+                onClick={() => go(() => deleteCheckpoint({ id: item.id }), onRemoved)}>
+                {pending ? "Removing…" : "Remove checkpoint"}
               </button>
             </div>
-          )
+            {error && <p className="error" role="alert">{error}</p>}
+          </div>
+        )}
+        {mode === "read" && !item.isSystem && (
+          <div className="gain">
+            {item.minutes > 0 && <span className="mono">{formatMinutes(item.minutes)}</span>}
+            {item.gain.map(([a, v]) => (
+              <AttrTag key={a} attr={a}>+{v} {ATTRIBUTE_NAMES[a]}</AttrTag>
+            ))}
+            <button className="link" onClick={() => setMode("edit")}>Edit</button>
+            <button className="link" onClick={() => setMode("remove")}>Remove</button>
+          </div>
         )}
         {item.gap && <div className="gap">{item.gap}</div>}
       </div>
@@ -176,13 +181,17 @@ function TimelineEntry({ item, quest, index }: { item: TimelineItem; quest: Ques
 }
 
 export function Timeline({ items, quest }: { items: TimelineItem[]; quest: QuestAttrs }) {
-  if (!items.length) return <p className="empty">No checkpoints yet. Log the first one above.</p>;
+  const timeline = useRef<HTMLDivElement>(null);
   return (
-    <ol className="timeline">
-      {items.map((item, i) => (
-        <TimelineEntry key={item.id} item={item} quest={quest} index={i} />
-      ))}
-    </ol>
+    <div ref={timeline} tabIndex={-1} role="region" aria-label="Checkpoint timeline">
+      {items.length ? (
+        <ol className="timeline">
+          {items.map((item, i) => (
+            <TimelineEntry key={item.id} item={item} quest={quest} index={i} onRemoved={() => timeline.current?.focus()} />
+          ))}
+        </ol>
+      ) : <p className="empty">No checkpoints yet. Log the first one above.</p>}
+    </div>
   );
 }
 

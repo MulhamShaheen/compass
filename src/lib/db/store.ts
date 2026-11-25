@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
 import { isLocalMode } from "../supabase/env";
 import { createClient, currentUser } from "../supabase/server";
+import { isReviewEntry } from "./derive";
 import { readDb, writeDb } from "./local-store";
 import { emptyDb, type Db } from "./schema";
 import { diffDb, profileToRow, rowsToDb, withUuids, type LoadedRows } from "./tables";
@@ -186,6 +187,12 @@ export async function saveDb(db: Db, opts: { replacing?: Db } = {}): Promise<voi
       if (db.nextSteps[0]?.id !== before.nextSteps[0]?.id && !isDeepStrictEqual(before, current)) {
         throw new NextStepWriteError("Your character changed while saving. Please try again.");
       }
+      // Snapshot actions only append journal entries. Keep any newer inline edits
+      // or deletions when a concurrent journal, quest or weather action saves.
+      if (!isDeepStrictEqual(before.journal, current.journal)) {
+        const priorIds = new Set(before.journal.map((entry) => entry.id));
+        db.journal = [...current.journal, ...db.journal.filter((entry) => !priorIds.has(entry.id))];
+      }
     }
     writeDb(db);
     snapshots.set(db, structuredClone(db));
@@ -222,3 +229,26 @@ export async function deleteAccount(): Promise<void> {
   if (error) throw new Error(`Could not delete the account: ${error.message}`);
   await sb.auth.signOut();
 }
+
+/** Compare the entry as opened by the editor before changing or removing it. */
+export async function writeJournalEntry(id: string, expected: string, body: string | null): Promise<boolean> {
+  if (isLocalMode()) {
+    const db = readDb();
+    const entry = db.journal.find((j) => j.id === id);
+    if (!entry || entry.body !== expected || isReviewEntry(db, entry)) return false;
+    if (body === null) db.journal = db.journal.filter((j) => j.id !== id);
+    else entry.body = body;
+    writeDb(db);
+    return true;
+  }
+  await requireUser();
+  const sb = await createClient();
+  const { data, error } = await sb.rpc("write_journal_entry", { p_id: id, p_expected: expected, p_body: body });
+  if (error?.code === "PGRST202" || error?.code === "42883") {
+    throw new JournalWriteError("Entry editing will be available after the database update.");
+  }
+  if (error) throw new JournalWriteError("Your change could not be saved. Please try again.");
+  return data === true;
+}
+
+export class JournalWriteError extends Error {}

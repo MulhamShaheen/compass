@@ -31,3 +31,13 @@ For example, “Walked a lap with my sister” might sit under “Run a 10K,” 
 The choices follow the date the checkpoint happened in your profile timezone. The entry uses the existing journal format, counts toward the daily writing ritual and adds no points. This iteration needs no database migration.
 
 **Question for the next review:** On an evening when a quest moved forward, did starting with a particular moment help you write something the regular question would have missed?
+
+## Iteration 8 — Writing and revisiting entries
+
+From the evening step on Today, open the logbook with the cursor ready to write. After saving a note, use the date labels to find it again. Edit its text in place, or cancel to keep the original. A correction keeps the entry’s original day, weather and reflection prompt. Weekly review notes stay with their completed review.
+
+The logbook asks for confirmation before permanently deleting an entry. On the quest timeline, the confirmation names the checkpoint and explains how removing it affects time and points. Putting away a habit frees its slot and keeps its past check-ins.
+
+**Review question:** Can you correct yesterday’s note, find it again, and tell what will happen before you remove a checkpoint or put away a habit?
+
+For hosted journal editing, apply pending migrations with `npm run db:migrate`. The database checks the owner and the original text when saving or deleting so an older tab cannot overwrite a newer correction.

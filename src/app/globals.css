@@ -440,7 +440,10 @@ header::after {
 .gap::before { content: "··· " / ""; color: var(--red); }
 .cp .edit { display: grid; gap: 8px; background: var(--bg); border: 1px solid var(--accent); padding: 10px; margin-top: 4px; }
 .cp .edit .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.cp .edit .row > input, .cp .edit .row > select { flex: 1 1 150px; }
+.checkpoint-field { display: grid; gap: 4px; min-width: 0; color: var(--muted); }
+.cp .edit .row > .checkpoint-field { flex: 1 1 150px; }
+.checkpoint-confirm { display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); background: var(--bg); overflow-wrap: anywhere; }
+.cp .gain .link { min-height: 32px; padding-inline: 4px; }
 
 /* ---------- today + weather ---------- */
 .today-next-step {
