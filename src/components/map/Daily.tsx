@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { archiveHabit, createHabit, createJournalEntry, setWeather, toggleHabit } from "@/lib/actions/daily";
 import { dismissUnlock } from "@/lib/actions/profile";
+import { reflectionQuestion } from "@/lib/game/daily";
 import { WEATHERS, WEATHER_NAMES } from "@/lib/game/types";
 import type { MapView } from "@/lib/view";
 import { WeatherIcon } from "../bits";
@@ -126,9 +128,13 @@ export function HabitsPanel({ habits, slots, reviews }: { habits: MapView["habit
 }
 
 export function Logbook({ journal }: { journal: MapView["journal"] }) {
-  const { go, pending } = useAction();
+  const router = useRouter();
+  const { go, pending, error } = useAction();
   const [offset, setOffset] = useState(0);
   const [body, setBody] = useState("");
+  const [checkpointId, setCheckpointId] = useState<string | null>(null);
+  const reflecting = checkpointId !== null;
+  const selected = journal.reflectionCheckpoints.find((c) => c.id === checkpointId);
   const prompt = journal.prompts[(journal.startIndex + offset) % journal.prompts.length];
   return (
     <section className="panel" aria-labelledby="logbook-h">
@@ -138,25 +144,56 @@ export function Logbook({ journal }: { journal: MapView["journal"] }) {
       </div>
       <div className="journal">
         <form
-          style={{ display: "grid", gap: 10 }}
           onSubmit={(e) => {
             e.preventDefault();
-            if (!body.trim()) return;
-            go(() => createJournalEntry({ body, prompt }), () => setBody(""));
+            if (!body.trim() || (reflecting && !selected)) return;
+            go(
+              async () => {
+                const result = await createJournalEntry(selected ? { body, checkpointId: selected.id } : { body, prompt });
+                if (!result.ok && selected) router.refresh();
+                return result;
+              },
+              () => {
+                setBody("");
+                setCheckpointId(null);
+              },
+            );
           }}
         >
-          <div className="prompt">{prompt}</div>
-          <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Write a few lines. Nobody grades this." aria-label="Logbook entry" />
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button className="btn" type="submit" disabled={pending || !body.trim()}>
+          {reflecting && (
+            <>
+              <label className="reflection-checkpoint">
+                <span className="label">Today’s checkpoint</span>
+                <select value={selected?.id ?? ""} onChange={(e) => setCheckpointId(e.target.value)} disabled={pending} autoFocus>
+                  {!selected && <option value="" disabled>This checkpoint is no longer available today</option>}
+                  {journal.reflectionCheckpoints.map((c) => <option key={c.id} value={c.id}>{c.title} · {c.questTitle}</option>)}
+                </select>
+              </label>
+              {journal.trueNorth && <div><span className="label">Your True North</span><p className="why">{journal.trueNorth}</p></div>}
+            </>
+          )}
+          <div className="prompt" id="journal-prompt">{reflecting ? reflectionQuestion(journal.trueNorth) : prompt}</div>
+          <textarea value={body} onChange={(e) => setBody(e.target.value)} disabled={pending} placeholder="Write a few lines. Nobody grades this." aria-label="Logbook entry" aria-describedby="journal-prompt" />
+          <div className="actions">
+            <button className="btn" type="submit" disabled={pending || !body.trim() || (reflecting && !selected)}>
               Log entry
             </button>
-            <button className="btn ghost" type="button" onClick={() => setOffset((o) => o + 1)}>
-              Another question
-            </button>
+            {reflecting ? (
+              <button className="link" type="button" disabled={pending} onClick={() => setCheckpointId(null)}>Back to daily question</button>
+            ) : (
+              <>
+                <button className="btn ghost" type="button" disabled={pending} onClick={() => setOffset((o) => o + 1)}>Another question</button>
+                {journal.reflectionCheckpoints.length > 0 && (
+                  <button className="link" type="button" disabled={pending} onClick={() => setCheckpointId(journal.reflectionCheckpoints[0].id)}>
+                    Reflect on a checkpoint
+                  </button>
+                )}
+              </>
+            )}
           </div>
+          {reflecting && error && <p className="error" role="alert">{error}</p>}
         </form>
-        <div className="entries">
+        <div className="entries" role="region" aria-label="Saved entries" tabIndex={journal.entries.length ? 0 : undefined}>
           {journal.entries.length === 0 && <p className="empty">Your entries will gather here.</p>}
           {journal.entries.map((j) => (
             <div className="entry" key={j.id}>

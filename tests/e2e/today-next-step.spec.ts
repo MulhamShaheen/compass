@@ -42,7 +42,7 @@ test("return to a saved step and log what actually happened on the chosen quest"
   await page.getByRole("link", { name: "← All quests" }).click();
 
   await panel.getByRole("link", { name: "Log what happened" }).click();
-  await expect(page.getByRole("heading", { name: "Run a 10K", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Run a 10K", exact: true })).toBeVisible();
   await expect(page.getByLabel("Checkpoint title")).toHaveValue(plan);
   const actual = "Walked to the park and jogged two laps";
   await page.getByLabel("Checkpoint title").fill(actual);

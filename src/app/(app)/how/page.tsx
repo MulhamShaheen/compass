@@ -62,7 +62,7 @@ export default function HowPage() {
             {" "}If you have an idea for later, save it on Today. Choose <b>Log what happened</b> when you’re ready to record it.
           </li>
           <li>
-            <b>Evening logbook.</b> Answer one question.
+            <b>Evening logbook.</b> Answer a daily question, or choose a checkpoint from today and write about why it mattered.
           </li>
           <li>
             <b>Weekly look.</b> Check where life went this week and whether it matches your True North.

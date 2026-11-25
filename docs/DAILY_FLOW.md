@@ -21,3 +21,13 @@ Pausing or finishing the quest clears its open note. A form left open in another
 With the PR checked out and the target Supabase database configured in `.env`, run `npm run db:migrate` before deploying the app. The local file store supports the same flow without account setup.
 
 The phone tests cover returning to a saved plan, editing the actual result, all three later-day choices and an older tab trying to log a replaced plan. An isolated PostgreSQL check exercised owner-only reads, rollback after a failed checkpoint save and retrying a successful save.
+
+## Iteration 7 — Reflect on one checkpoint
+
+The evening logbook can start with something that happened today. Choose **Reflect on a checkpoint**, pick a moment from a main or side quest, and write why it mattered. If you set a True North, the logbook shows it beside the question. You can switch back to the daily question and keep the words you’ve already written.
+
+For example, “Walked a lap with my sister” might sit under “Run a 10K,” but the thing worth remembering was the conversation on the way home. Saving that reflection puts the quest name, checkpoint title and question in the journal entry. They remain readable in the logbook and JSON export even if the checkpoint changes later.
+
+The choices follow the date the checkpoint happened in your profile timezone. The entry uses the existing journal format, counts toward the daily writing ritual and adds no points. This iteration needs no database migration.
+
+**Question for the next review:** On an evening when a quest moved forward, did starting with a particular moment help you write something the regular question would have missed?

@@ -1,4 +1,6 @@
-import { addDays, daysBetween, weekdayIndex, weekStart, type DayKey } from "../time";
+import { NORTH_PLACEHOLDER } from "../copy";
+import type { Db } from "../db/schema";
+import { addDays, dayKey, daysBetween, weekdayIndex, weekStart, type DayKey } from "../time";
 
 /** The last 7 days, oldest first, as booleans for the habit strip. */
 export function last7(logDays: DayKey[], today: DayKey): boolean[] {
@@ -52,6 +54,26 @@ export const DEFAULT_PROMPTS = [
   "Which quest are you avoiding, and why?",
   "What small thing went better than expected?",
 ] as const;
+
+export function reflectionQuestion(trueNorth: string | null): string {
+  return trueNorth ? "How did this moment connect to your True North?" : "Why did this moment matter to you?";
+}
+
+export interface DailyReflection {
+  trueNorth: string | null;
+  reflectionCheckpoints: { id: string; title: string; questTitle: string }[];
+}
+
+/** Reflect on what happened on this local day, including work on a quest since paused or finished. */
+export function dailyReflection(db: Db, today: DayKey, tz: string): DailyReflection {
+  const north = db.profile?.trueNorth?.trim();
+  const questTitles = new Map(db.quests.filter((q) => q.type !== "system").map((q) => [q.id, q.title]));
+  const reflectionCheckpoints = db.checkpoints
+    .filter((c) => c.source !== "system" && questTitles.has(c.questId) && dayKey(new Date(c.occurredAt), tz) === today)
+    .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt))
+    .map((c) => ({ id: c.id, title: c.title, questTitle: questTitles.get(c.questId)! }));
+  return { reflectionCheckpoints, trueNorth: north && north !== NORTH_PLACEHOLDER ? north : null };
+}
 
 /** Index of today's prompt. Before prompts rotate, it is always the first one. */
 export function promptIndex(startDay: DayKey, today: DayKey, rotates: boolean, count: number = DEFAULT_PROMPTS.length): number {

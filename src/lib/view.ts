@@ -7,6 +7,7 @@ import {
   characterLevel,
   checkpointPoints,
   cleanDays,
+  dailyReflection,
   dayNumber,
   DEFAULT_PROMPTS,
   FEATURES,
@@ -29,6 +30,7 @@ import {
   UNLOCK_COPY,
   weeklyHours,
   type Attribute,
+  type DailyReflection,
   type Feature,
   type LevelInfo,
   type QuestStats,
@@ -109,7 +111,7 @@ export interface MapView {
   }[];
   habitSlots: number;
   reviewsCompleted: number;
-  journal: {
+  journal: DailyReflection & {
     prompts: string[];
     startIndex: number;
     rotates: boolean;
@@ -251,6 +253,7 @@ export function buildMap(db: Db): MapView {
     habitSlots: habitSlots(db.reviews.length),
     reviewsCompleted: db.reviews.length,
     journal: {
+      ...dailyReflection(db, today, tz),
       prompts: prompts,
       startIndex: promptIndex(state.startDay, today, unlocked.prompts_rotate, prompts.length),
       rotates: unlocked.prompts_rotate,
