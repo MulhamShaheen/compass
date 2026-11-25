@@ -14,10 +14,10 @@ The [product spec](PRODUCT.md) describes how Compass works. The [README](../READ
 | Area | Tables |
 | --- | --- |
 | Account and game | `profiles`, `chapters`, `quests`, `checkpoints`, `attribute_ratings`, `unlocks` |
-| Daily and weekly activity | `weather_logs`, `habits`, `habit_logs`, `journal_entries`, `prompts`, `weekly_reviews`, `today_next_steps` |
+| Daily and weekly activity | `weather_logs`, `habits`, `habit_logs`, `journal_entries`, `prompts`, `weekly_reviews`, `today_next_steps`, `compass_events` |
 | Calendar | `calendar_sources`, `calendar_events`, `calendar_rules`, `calendar_dismissals` |
 
-The store can still import an older character from `prototype_state`. Checkpoints feed points and time totals. The Today plan belongs to the active main quest. A linked checkpoint and the removal of its plan commit together in Supabase.
+The store can still import an older character from `prototype_state`. Checkpoints feed points and time totals, and completed events can contribute points. The Today plan belongs to the active main quest. A linked checkpoint and the removal of its plan commit together in Supabase.
 
 ## 3. Game rules and verification
 
@@ -43,6 +43,7 @@ Evening checkpoint reflection landed in [PR #5](https://github.com/MulhamShaheen
 - Verify email magic-link sign-in on a deployed preview.
 - Install the PWA on a real iPhone and Android device.
 - Complete the live iCloud and Google checks in the [calendar setup](../README.md#calendar-setup).
+- Verify Google consent and writes from Events. [Events setup](EVENTS.md#google-calendar-setup)
 
 ## 5. Next feature
 

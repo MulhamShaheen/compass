@@ -1,4 +1,5 @@
 import { ATTRIBUTES, type Attribute, type GameCheckpoint, type GameQuest } from "./types";
+import type { CompassEvent } from "../db/schema";
 
 export const POINTS_PER_MINUTE_DIVISOR = 6;
 export const NOTE_ONLY_POINTS = 2;
@@ -11,6 +12,12 @@ export const CHARACTER_LEVEL_STEP = 400;
 export function checkpointPoints(cp: Pick<GameCheckpoint, "minutes" | "isMilestone">): number {
   const base = cp.minutes > 0 ? Math.round(cp.minutes / POINTS_PER_MINUTE_DIVISOR) : NOTE_ONLY_POINTS;
   return base + (cp.isMilestone ? MILESTONE_BONUS : 0);
+}
+
+export function eventPoints(event: Pick<CompassEvent, "completedAt" | "checkpointId" | "startsAt" | "endsAt">): number {
+  if (!event.completedAt || event.checkpointId) return 0;
+  const minutes = (Date.parse(event.endsAt) - Date.parse(event.startsAt)) / 60_000;
+  return checkpointPoints({ minutes, isMilestone: false });
 }
 
 /** 100% to the primary attribute, or 70/30 when the quest has a secondary one. */
@@ -34,13 +41,13 @@ export function emptyTotals(): AttributeTotals {
 }
 
 /**
- * Points and minutes per attribute, computed from checkpoints.
+ * Points per attribute from checkpoints and completed events. Logged minutes come from checkpoints.
  * System quests (the Prologue) never feed attributes.
  */
 export function attributeTotals(
   quests: GameQuest[],
   checkpoints: GameCheckpoint[],
-  opts: { since?: Date } = {},
+  opts: { since?: Date; events?: CompassEvent[] } = {},
 ): AttributeTotals {
   const byId = new Map(quests.map((q) => [q.id, q]));
   const totals = emptyTotals();
@@ -50,6 +57,15 @@ export function attributeTotals(
     if (opts.since && new Date(cp.occurredAt) < opts.since) continue;
     for (const [attr, v] of splitByAttributes(quest, checkpointPoints(cp))) totals[attr].points += v;
     for (const [attr, v] of splitByAttributes(quest, cp.minutes)) totals[attr].minutes += v;
+  }
+  for (const event of opts.events ?? []) {
+    if (opts.since && new Date(event.startsAt) < opts.since) continue;
+    const points = eventPoints(event);
+    if (!points) continue;
+    const quest = event.questId ? byId.get(event.questId) : undefined;
+    if (quest?.type === "system") continue;
+    const shares = quest ? splitByAttributes(quest, points) : [[event.attribute, points]] as const;
+    for (const [attribute, share] of shares) totals[attribute].points += share;
   }
   return totals;
 }

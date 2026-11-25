@@ -14,6 +14,7 @@ const TABLES = [
   "unlocks",
   "weekly_reviews",
   "today_next_steps",
+  "compass_events",
   "prototype_state",
   "calendar_sources",
   "calendar_events",
@@ -48,6 +49,15 @@ test.describe("access rules", () => {
       body: JSON.stringify({ quest_id: questId, title: "A's note", occurred_at: new Date().toISOString() }),
     });
     expect(cp.status).toBe(201);
+    const event = {
+      title: "Private event", starts_at: "2026-11-25T12:00:00Z", ends_at: "2026-11-25T13:00:00Z",
+      quest_id: questId, checkpoint_id: (cp.body as { id: string }[])[0].id, attribute: "mind",
+    };
+    const added = await rest("compass_events", s.a.token, { method: "POST", body: JSON.stringify(event) });
+    expect(added.status).toBe(201);
+    const eventId = (added.body as { id: string }[])[0].id;
+    const foreignEvent = await rest("compass_events", s.b.token, { method: "POST", body: JSON.stringify(event) });
+    expect(foreignEvent.status).toBeGreaterThanOrEqual(400);
 
     // B reads nothing of A's in any table.
     for (const table of TABLES) {
@@ -80,6 +90,9 @@ test.describe("access rules", () => {
     const mine = await rest(`quests?id=eq.${questId}&select=title`, s.a.token);
     expect(mine.body).toEqual([{ title: "A's secret quest" }]);
     await rest(`quests?id=eq.${questId}`, s.a.token, { method: "DELETE" });
+    expect((await rest(`compass_events?id=eq.${eventId}&select=quest_id,checkpoint_id`, s.a.token)).body)
+      .toEqual([{ quest_id: null, checkpoint_id: null }]);
+    await rest(`compass_events?id=eq.${eventId}`, s.a.token, { method: "DELETE" });
   });
 
   test("a next step is visible only to the person who planned it", async () => {

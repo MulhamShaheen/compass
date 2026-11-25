@@ -23,22 +23,23 @@ function digest(value: string): string {
   return createHash("sha256").update(value).digest("base64url");
 }
 
-function oauthState(verifier: string, userId: string): string {
-  return digest(`compass-calendar:${userId}:${verifier}`);
+function oauthState(verifier: string, userId: string, path: string): string {
+  const purpose = path === googleCallbackPath ? "compass-calendar" : path;
+  return digest(`${purpose}:${userId}:${verifier}`);
 }
 
-export function startGoogleAuthorization(origin: string, userId: string) {
+export function startGoogleAuthorization(origin: string, userId: string, callbackPath = googleCallbackPath, scope = GOOGLE_SCOPE) {
   const { clientId } = credentials();
   const verifier = randomBytes(32).toString("base64url");
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.search = new URLSearchParams({
     client_id: clientId,
-    redirect_uri: new URL(googleCallbackPath, origin).href,
+    redirect_uri: new URL(callbackPath, origin).href,
     response_type: "code",
-    scope: GOOGLE_SCOPE,
+    scope,
     access_type: "offline",
     prompt: "consent",
-    state: oauthState(verifier, userId),
+    state: oauthState(verifier, userId, callbackPath),
     code_challenge: digest(verifier),
     code_challenge_method: "S256",
   }).toString();
@@ -49,15 +50,16 @@ export function validGoogleState(
   verifier: string,
   userId: string,
   state: string,
+  callbackPath = googleCallbackPath,
 ): boolean {
   if (!/^[\w-]{43}$/.test(verifier) || !/^[\w-]{43}$/.test(state)) return false;
   return timingSafeEqual(
-    Buffer.from(oauthState(verifier, userId)),
+    Buffer.from(oauthState(verifier, userId, callbackPath)),
     Buffer.from(state),
   );
 }
 
-async function tokenRequest(params: Record<string, string>) {
+export async function tokenRequest(params: Record<string, string>) {
   const { clientId, clientSecret } = credentials();
   const response = await fetch(GOOGLE_TOKEN, {
     method: "POST",
@@ -84,14 +86,16 @@ export async function exchangeGoogleCode(
   code: string,
   verifier: string,
   origin: string,
+  callbackPath = googleCallbackPath,
+  scope = GOOGLE_SCOPE,
 ): Promise<string> {
   const token = await tokenRequest({
     grant_type: "authorization_code",
     code,
     code_verifier: verifier,
-    redirect_uri: new URL(googleCallbackPath, origin).href,
+    redirect_uri: new URL(callbackPath, origin).href,
   });
-  if (!token.refresh_token || !token.scope?.split(" ").includes(GOOGLE_SCOPE)) {
+  if (!token.refresh_token || !token.scope?.split(" ").includes(scope)) {
     throw new Error("Google did not grant offline calendar access.");
   }
   return token.refresh_token;

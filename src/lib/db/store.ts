@@ -22,6 +22,7 @@ import { diffDb, profileToRow, rowsToDb, withUuids, type LoadedRows } from "./ta
 
 export const NEXT_STEP_CHANGED = "Your next step changed. Open Today to see the latest version.";
 export class NextStepWriteError extends Error {}
+export class EventWriteError extends Error {}
 
 export class SignedOutError extends Error {
   constructor() {
@@ -44,7 +45,11 @@ async function requireUser() {
 async function fetchAll<T>(sb: AnyClient, table: string, userId: string): Promise<T[]> {
   const out: T[] = [];
   for (let from = 0; ; from += PAGE) {
-    const { data, error } = await sb.from(table).select("*").eq("user_id", userId).range(from, from + PAGE - 1);
+    let query = sb.from(table).select("*").eq("user_id", userId);
+    if (table === "compass_events") query = query.order("starts_at").order("id");
+    const { data, error } = await query.range(from, from + PAGE - 1);
+    // Keep the dashboard available before the Events migration is applied.
+    if (table === "compass_events" && (error?.code === "42P01" || error?.code === "PGRST205")) return [];
     if (error) throw new Error(`Could not load ${table}: ${error.message}`);
     out.push(...(data as T[]));
     if (data.length < PAGE) return out;
@@ -60,12 +65,13 @@ async function loadNextSteps(sb: AnyClient, userId: string): Promise<LoadedRows[
 }
 
 async function loadRows(sb: AnyClient, userId: string): Promise<LoadedRows> {
-  const [profile, chapters, quests, checkpoints, today_next_steps, habits, habit_logs, weather_logs, journal_entries, attribute_ratings, unlocks, weekly_reviews, prompts] =
+  const [profile, chapters, quests, checkpoints, compass_events, today_next_steps, habits, habit_logs, weather_logs, journal_entries, attribute_ratings, unlocks, weekly_reviews, prompts] =
     await Promise.all([
       sb.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
       fetchAll(sb, "chapters", userId),
       fetchAll(sb, "quests", userId),
       fetchAll(sb, "checkpoints", userId),
+      fetchAll(sb, "compass_events", userId),
       loadNextSteps(sb, userId),
       fetchAll(sb, "habits", userId),
       fetchAll(sb, "habit_logs", userId),
@@ -80,13 +86,40 @@ async function loadRows(sb: AnyClient, userId: string): Promise<LoadedRows> {
   if (prompts.error) throw new Error(`Could not load prompts: ${prompts.error.message}`);
   return {
     profile: profile.data,
-    chapters, quests, checkpoints, today_next_steps, habits, habit_logs, weather_logs, journal_entries, attribute_ratings, unlocks, weekly_reviews,
+    chapters, quests, checkpoints, compass_events, today_next_steps, habits, habit_logs, weather_logs, journal_entries, attribute_ratings, unlocks, weekly_reviews,
     prompts: prompts.data ?? [],
   } as LoadedRows;
 }
 
 async function writeChanges(sb: AnyClient, userId: string, before: Db, after: Db, replacing = false): Promise<void> {
   const changes = diffDb(before, after, userId);
+  const eventChange = changes.find((change) => change.table === "compass_events");
+  if (eventChange && !replacing) {
+    const previous = new Map(before.events.map((event) => [event.id, event.revision]));
+    // A revision predicate prevents stale updates and removes from reviving or
+    // overwriting an event after a concurrent write.
+    for (const row of eventChange.upserts) {
+      const revision = previous.get(String(row.id));
+      const query = revision === undefined
+        ? sb.from("compass_events").insert(row)
+        : sb.from("compass_events").update(row).eq("user_id", userId).eq("id", row.id).eq("revision", revision);
+      const { data, error } = await query.select("id").maybeSingle();
+      if (error?.code === "42P01" || error?.code === "PGRST205") {
+        throw new EventWriteError("Events will be available once the database update is applied.");
+      }
+      if (error?.code === "23503") throw new EventWriteError("A linked quest or checkpoint changed. Reload and choose the links again.");
+      if (error) throw new EventWriteError("The event could not be saved. Please try again.");
+      if (!data) throw new EventWriteError("The event changed while saving. Reload and try again.");
+    }
+    for (const row of eventChange.deletes) {
+      const { data, error } = await sb.from("compass_events").delete().eq("user_id", userId)
+        .eq("id", row.id).eq("revision", previous.get(String(row.id))!).select("id").maybeSingle();
+      if (error?.code === "23503") throw new EventWriteError("Remove this event from Google Calendar before deleting it.");
+      if (error) throw new EventWriteError("The event could not be deleted. Please try again.");
+      if (!data) throw new EventWriteError("The event changed while deleting. Reload and try again.");
+    }
+    changes.splice(changes.indexOf(eventChange), 1);
+  }
   // Normal plan changes compare revisions in Postgres. The RPC commits a
   // linked checkpoint with the removal of its plan in the same transaction.
   const planChange = changes.find((c) => c.table === "today_next_steps");
@@ -176,6 +209,14 @@ export async function loadDb(): Promise<Db> {
  */
 export async function saveDb(db: Db, opts: { replacing?: Db } = {}): Promise<void> {
   if (opts.replacing) {
+    if (!isLocalMode() && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const user = await requireUser();
+      const { readGooglePublishing, disconnectGooglePublishing } = await import("../events/google-store");
+      const publishing = await readGooglePublishing(user.id);
+      if (publishing?.connected && !(await disconnectGooglePublishing(user.id))) {
+        throw new EventWriteError("Wait for the current Google Calendar operation to finish.");
+      }
+    }
     const { calendarStore } = await import("../calendar/store");
     await (await calendarStore()).clear();
   }
@@ -187,11 +228,27 @@ export async function saveDb(db: Db, opts: { replacing?: Db } = {}): Promise<voi
       if (db.nextSteps[0]?.id !== before.nextSteps[0]?.id && !isDeepStrictEqual(before, current)) {
         throw new NextStepWriteError("Your character changed while saving. Please try again.");
       }
+      if (!isDeepStrictEqual(before.events, db.events)) {
+        if (!isDeepStrictEqual(before, current)) throw new EventWriteError("Your character changed while saving. Please try again.");
+      } else {
+        // Preserve events saved by another action while this one was pending.
+        db.events = current.events;
+      }
       // Snapshot actions only append journal entries. Keep any newer inline edits
       // or deletions when a concurrent journal, quest or weather action saves.
       if (!isDeepStrictEqual(before.journal, current.journal)) {
         const priorIds = new Set(before.journal.map((entry) => entry.id));
         db.journal = [...current.journal, ...db.journal.filter((entry) => !priorIds.has(entry.id))];
+      }
+    }
+    const questIds = new Set(db.quests.map((quest) => quest.id));
+    const checkpointIds = new Set(db.checkpoints.map((checkpoint) => checkpoint.id));
+    // Match the hosted ON DELETE SET NULL rules without dropping event history.
+    for (const event of db.events) {
+      const questId = event.questId && questIds.has(event.questId) ? event.questId : null;
+      const checkpointId = questId && event.checkpointId && checkpointIds.has(event.checkpointId) ? event.checkpointId : null;
+      if (event.questId !== questId || event.checkpointId !== checkpointId) {
+        Object.assign(event, { questId, checkpointId, revision: event.revision + 1 });
       }
     }
     writeDb(db);

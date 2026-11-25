@@ -35,6 +35,7 @@ export default function HowPage() {
         <h2>How points work</h2>
         <ul>
           <li>Each checkpoint earns 1 point per 6 minutes spent (10 per hour).</li>
+          <li>Completed events use the same duration rule. When an event links to a checkpoint, the checkpoint supplies the points for that activity.</li>
           <li>A milestone adds a {MILESTONE_BONUS}-point bonus.</li>
           <li>A checkpoint with no time logged still earns {NOTE_ONLY_POINTS} points, because noticing counts.</li>
           <li>Quests with two attributes split points 70/30 between primary and secondary.</li>

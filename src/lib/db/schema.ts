@@ -66,6 +66,21 @@ export interface Checkpoint {
   createdAt: string;
 }
 
+export interface CompassEvent {
+  id: string;
+  title: string;
+  note: string | null;
+  startsAt: string;
+  endsAt: string;
+  questId: string | null;
+  checkpointId: string | null;
+  attribute: Attribute;
+  completedAt: string | null;
+  createdAt: string;
+  /** Prevent concurrent writes from overwriting a newer event. */
+  revision: number;
+}
+
 export interface Habit {
   id: string;
   name: string;
@@ -114,6 +129,7 @@ export interface Db {
   ratings: AttributeRating[];
   quests: Quest[];
   checkpoints: Checkpoint[];
+  events: CompassEvent[];
   nextSteps: NextStep[];
   habits: Habit[];
   habitLogs: HabitLog[];
@@ -135,6 +151,7 @@ export function emptyDb(): Db {
     ratings: [],
     quests: [],
     checkpoints: [],
+    events: [],
     nextSteps: [],
     habits: [],
     habitLogs: [],

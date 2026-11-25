@@ -6,6 +6,7 @@ import {
   attributeTotals,
   characterLevel,
   checkpointPoints,
+  eventPoints,
   cleanDays,
   dailyReflection,
   dayNumber,
@@ -123,7 +124,7 @@ export interface MapView {
 function header(db: Db, now: Date): HeaderView {
   const tz = timezone(db);
   const today = dayKey(now, tz);
-  const total = totalPoints(attributeTotals(db.quests, db.checkpoints));
+  const total = totalPoints(attributeTotals(db.quests, db.checkpoints, { events: db.events }));
   const start = db.profile?.prologueCompletedAt ? dayKey(new Date(db.profile.prologueCompletedAt), tz) : today;
   return {
     name: db.profile?.characterName ?? null,
@@ -176,7 +177,7 @@ export function buildMap(db: Db): MapView {
   const state = unlockState(db, now);
   const unlocked = Object.fromEntries(FEATURES.map((f) => [f, isUnlocked(db, f)])) as Record<Feature, boolean>;
   const hints = Object.fromEntries(FEATURES.map((f) => [f, lockedHint(f, state)])) as Record<Feature, string>;
-  const all = attributeTotals(db.quests, db.checkpoints);
+  const all = attributeTotals(db.quests, db.checkpoints, { events: db.events });
   const ranges = rangeTotals(db.quests, db.checkpoints, now);
   const level = characterLevel(totalPoints(all)).level;
   const activeQuests = db.quests.filter((q) => q.type !== "system" && q.status === "active");
@@ -312,6 +313,8 @@ export function buildThread(db: Db, id: string): ThreadView | null {
     .filter((c) => c.questId === id)
     .sort((a, b) => b.occurredAt.localeCompare(a.occurredAt) || b.createdAt.localeCompare(a.createdAt));
   const system = quest.type === "system";
+  const stats = questStats(quest, system ? [] : cps, today);
+  if (!system) stats.points += db.events.filter((event) => event.questId === id).reduce((sum, event) => sum + eventPoints(event), 0);
   const day = (iso: string): DayKey => dayKey(new Date(iso), tz);
   return {
     header: header(db, now),
@@ -326,7 +329,7 @@ export function buildThread(db: Db, id: string): ThreadView | null {
       secondaryAttr: quest.secondaryAttr,
     },
     nextStep: db.nextSteps.find((step) => step.questId === id) ?? null,
-    stats: { ...questStats(quest, system ? [] : cps, today), checkpoints: cps.length, startedLabel: formatDay(quest.startedOn, today) },
+    stats: { ...stats, checkpoints: cps.length, startedLabel: formatDay(quest.startedOn, today) },
     timeline: cps.map((c, i) => {
       const prev = cps[i + 1];
       return {

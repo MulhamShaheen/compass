@@ -25,7 +25,8 @@ The [clickable prototype](prototype/compass.html) captures the original interact
 | **Chapter** | A season of life with a title, such as "Chapter 3 · The Builder's Year". | The Prologue starts the first chapter. |
 | **Attribute** | Body, Mind, Bonds, Craft, Spirit. Fixed set in v1. | Has points and a level (every 150 pts). |
 | **Quest** | A long-running thread. Type: `main` or `side`. Status: `active`, `paused` or `done`. | Links to 1 primary attribute and an optional secondary one. Has a "why". |
-| **Checkpoint** | A dated entry inside a quest: title, commentary, date and time, time spent, milestone flag. | The only source of attribute points. |
+| **Checkpoint** | A dated entry inside a quest: title, commentary, date and time, time spent, milestone flag. | Earns points for recorded progress. |
+| **Event** | A scheduled activity with a start and end. | Can link to a quest and checkpoint, earn points on completion, and export to a calendar. |
 | **Habit** | Something to keep (good) or starve (bad), ticked per day. | Shows a 7-day strip and a streak. Earns no points in v1. |
 | **Inner weather** | Daily mood check-in: Clear, Breezy, Cloudy, Foggy or Stormy. | One per day, can be changed. |
 | **Logbook entry** | A diary entry answering one reflective prompt. | Prompts rotate after the first entry. |
@@ -38,7 +39,7 @@ The [clickable prototype](prototype/compass.html) captures the original interact
 - A checkpoint with no time logged earns **2 points**.
 - A quest with two attributes splits points **70% primary / 30% secondary**.
 - Attribute level = `floor(points / 150) + 1`. Character level = `floor(totalPoints / 400) + 1`.
-- Points are **always computed from checkpoints**, never stored as a running total. Editing or deleting a checkpoint recomputes them.
+- Points are computed from current checkpoints and completed events. An event linked to a checkpoint adds zero points of its own. Time reports use checkpoint minutes.
 
 ### Views
 

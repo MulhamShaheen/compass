@@ -81,6 +81,7 @@ export function Nav({ reviewUnlocked, calendarUnlocked }: { reviewUnlocked: bool
   const path = usePathname();
   const links: [string, string][] = [
     ["/", "The map"],
+    ["/events", "Events"],
     ...(reviewUnlocked ? ([["/review", "Weekly review"]] as [string, string][]) : []),
     ...(calendarUnlocked ? ([["/calendar", "Time"]] as [string, string][]) : []),
     ["/how", "How it plays"],

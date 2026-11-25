@@ -5,7 +5,7 @@ import { z } from "zod";
 import { buildSample } from "../dev/sample";
 import { appNow, syncUnlocks, timezone } from "../db/derive";
 import { emptyDb } from "../db/schema";
-import { loadDb, saveDb, SignedOutError } from "../db/store";
+import { EventWriteError, loadDb, saveDb, SignedOutError } from "../db/store";
 import type { ActionResult } from "./run";
 
 /**
@@ -17,7 +17,7 @@ async function guarded(fn: () => Promise<ActionResult>): Promise<ActionResult> {
   try {
     return await fn();
   } catch (e) {
-    if (e instanceof SignedOutError) return { ok: false, error: e.message };
+    if (e instanceof SignedOutError || e instanceof EventWriteError) return { ok: false, error: e.message };
     throw e;
   }
 }
