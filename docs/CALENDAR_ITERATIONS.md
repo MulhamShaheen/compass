@@ -55,4 +55,4 @@ The weekly review asks how much of the open time on the calendar felt usable. It
 
 An optional next checkpoint idea goes into the existing weekly logbook note as an intention. The calendar reflection displays the free-time total and the dates it covers.
 
-This iteration branches from `main` and can be reviewed and merged independently of the suggestion controls in PR #2. It uses the existing calendar tables and adds no migration.
+This iteration uses the existing calendar tables. It landed in [PR #3](https://github.com/MulhamShaheen/compass/pull/3). Current hosted release checks are in the [implementation plan](IMPLEMENTATION_PLAN.md#hosted-release-checks).

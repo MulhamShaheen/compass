@@ -4,7 +4,7 @@
 
 Compass is a personal, gamified life dashboard. You follow the threads of your life as **quests**, log progress as dated **checkpoints**, and see which parts of your life (Body, Mind, Bonds, Craft, Spirit) are getting your time. It is also a diary and reflection system, and it should be a joy to open every day.
 
-The clickable prototype is in [`prototype/compass.html`](prototype/compass.html). Open it in a browser. It is the visual and behavioural reference for v1.
+The [clickable prototype](prototype/compass.html) captures the original interaction design. The [implementation plan](IMPLEMENTATION_PLAN.md) tracks milestones and upcoming work.
 
 ---
 
@@ -22,13 +22,13 @@ The clickable prototype is in [`prototype/compass.html`](prototype/compass.html)
 |---|---|---|
 | **Character** | The user. Has a name, a level and five attributes. | Level comes from total points. |
 | **True North** | One sentence of purpose. | Editable any time. Shown in the header. |
-| **Chapter** | A season of life with a title, such as "Chapter 3 · The Builder's Year". | Has a start and end. Closing it triggers a chapter review (post-MVP). |
+| **Chapter** | A season of life with a title, such as "Chapter 3 · The Builder's Year". | The Prologue starts the first chapter. |
 | **Attribute** | Body, Mind, Bonds, Craft, Spirit. Fixed set in v1. | Has points and a level (every 150 pts). |
 | **Quest** | A long-running thread. Type: `main` or `side`. Status: `active`, `paused` or `done`. | Links to 1 primary attribute and an optional secondary one. Has a "why". |
 | **Checkpoint** | A dated entry inside a quest: title, commentary, date and time, time spent, milestone flag. | The only source of attribute points. |
 | **Habit** | Something to keep (good) or starve (bad), ticked per day. | Shows a 7-day strip and a streak. Earns no points in v1. |
 | **Inner weather** | Daily mood check-in: Clear, Breezy, Cloudy, Foggy or Stormy. | One per day, can be changed. |
-| **Logbook entry** | A diary entry answering one reflective prompt. | Prompts rotate and are user-editable later. |
+| **Logbook entry** | A diary entry answering one reflective prompt. | Prompts rotate after the first entry. |
 | **Today loop** | Three daily steps: check in, move a thread, write in the logbook. | Derived from the day's activity, not stored as tasks. |
 
 ### Points rules (v1)
@@ -54,7 +54,7 @@ The clickable prototype is in [`prototype/compass.html`](prototype/compass.html)
 
 **The answer:** onboarding is itself a quest. The user plays a short **Prologue** (about 5 minutes) on day one, then **unlocks sections over the first week**. Each unlock is a checkpoint in a special system quest called *Prologue*, so the user can later read the story of how they started.
 
-### 3.1 Day 0: the Prologue (5 short screens)
+### 3.1 Day 1: the Prologue (5 short screens)
 
 One question per screen, a large serif prompt, and a "Skip for now" on everything except step 4.
 
@@ -94,23 +94,24 @@ Each unlock is triggered by **play, not by time**, with a time fallback so nobod
 - **Optional next step:** Today shows the active main quest and its latest checkpoint. You can leave yourself one idea for what to do next. **Log what happened** opens that quest’s checkpoint form with the idea filled in. Edit it to describe what happened. On a later day, you can keep, change or let go of the idea. Points and the daily loop still come from the checkpoint you save.
 - **Evening reflection:** The logbook lets you choose a checkpoint that happened today and reflect on how it related to your True North. The entry keeps the quest and checkpoint names as you knew them when you wrote it.
 - **Weekly review (5 minutes):** (1) look at where life went this week against your True North, (2) choose quests to pause, resume or begin, (3) write one logbook entry: "What will next week be about?"
-- **Chapter close (post-MVP):** write a summary, see the chapter in numbers, and name the next chapter.
 
 ---
 
 ## 4. Calendar and future metrics
 
-**Yes, a calendar fits naturally.** Its job is to answer "how much free time do I really have, and where does my busy time go?"
+Time shows how much of the user's waking time is booked and how much is open.
 
 ### 4.1 Calendar v1 (read-only)
 
 - **Sources:**
-  - Google Calendar through OAuth (`calendar.readonly`).
+  - The primary Google Calendar through read-only OAuth.
   - Any **ICS subscription URL**. This covers iCloud/Apple Calendar (Share Calendar → Public), Outlook, and others with no OAuth needed.
-- **Free-time model:** the user sets "waking hours" (for example 07:00 to 23:00) and work hours. **Free time = waking hours − busy events**, per day and per week.
+- **Free-time model:** the user sets waking hours, and Compass subtracts the combined busy intervals per day and week. Overlapping events count once.
 - **New panel, "Time":** a week strip showing busy versus free hours per day, and a "Free hours this week" figure with its trend against the last 4 weeks.
 - **Tag events to attributes or quests.** Rules like "events containing *gym* → Body" or "events with *Grandma* → quest: Stay close to grandmother". Tagged events **suggest** a checkpoint ("You had *Gym* for 1h. Log it on *Run a 10K*?"). The user confirms. Nothing is logged silently.
 - Calendar time that has been tagged and confirmed feeds **Where life goes** like any checkpoint.
+- Preview a rule against recent events, inspect the rules that suggested a match, or dismiss one occurrence. Dismissed events still count as busy.
+- When connected calendars are up to date, the weekly review asks how much of the open time felt usable. An optional next checkpoint idea can be saved with the review note.
 
 ### 4.2 Future metrics (post-MVP, same pattern)
 
@@ -140,8 +141,6 @@ Each source is a read-only **signal** that can suggest checkpoints or show as a 
 - Phone-friendly installable web app (PWA), light and dark theme.
 - JSON export.
 
-**Next (v1.1):** calendar (ICS first, then Google), event-tagging rules, the Time panel, editable prompts, quiet mode.
-
-**Later:** chapters and chapter review, resources, issues, Apple Health signals, Claude as a companion that reads the logbook and suggests next moves, native mobile app.
+**Planned:** [Chapter Review](IMPLEMENTATION_PLAN.md#5-next-feature). Editable prompts, resources, issues, Apple Health signals, a logbook companion, and native mobile remain ideas for later.
 
 **Out:** social features and sharing, public leaderboards, notifications beyond one optional daily reminder.

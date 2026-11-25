@@ -4,7 +4,7 @@ Compass is a personal, gamified life dashboard: quests are long-running threads 
 
 ## Read first
 - `docs/PRODUCT.md`: what we are building and why (concepts, points rules, onboarding, calendar).
-- `docs/IMPLEMENTATION_PLAN.md`: stack, data model, milestones M0 to M8 with acceptance criteria.
+- `docs/IMPLEMENTATION_PLAN.md`: architecture, milestone status, hosted release checks, and the next feature.
 - `docs/prototype/compass.html`: the original clickable reference. Still the reference for layout, copy tone and behaviour, but no longer for the look.
 
 ## Visual style
@@ -16,8 +16,7 @@ The app looks like a game character menu (Cyberpunk 2077 style HUD), not like th
 - Decorative CSS text (`content:`) must use empty alt text (`content: "// " / ""`) so it stays out of accessible names.
 
 ## How to work
-- Build milestone by milestone, in order. Don't start a milestone before the previous one's "Done when" is met.
-- After finishing a milestone, tick it in `README.md` and summarise what changed.
+- Update the implementation plan when a milestone or release check is complete. Record the design decisions and verification in the relevant iteration notes.
 - All game rules (points, levels, unlocks, slots, streaks, free time) live in `src/lib/game` as pure, unit-tested functions. Components and server actions call them and never re-implement them.
 - Server actions validate with zod. Data access goes through Supabase with Row Level Security. Never accept `user_id` from the client.
 - Times are stored as `timestamptz`. "Today" and week boundaries are computed in the user's profile timezone. Weeks start on Monday.
@@ -31,7 +30,7 @@ The app looks like a game character menu (Cyberpunk 2077 style HUD), not like th
 - `npm run test:e2e:supabase`: the same flows plus access-rule and delete-account tests against the real Supabase project in `.env`, as throwaway `e2e-*@compass.test` users
 - `npm run lint && npm run typecheck`
 - `npm run db:migrate`: apply `supabase/migrations` (add `-- --status` to list)
-- `npm run db:types`: regenerate Supabase types after a migration (hand-written in `src/lib/db/types.ts` until the Supabase CLI is installed)
+- `npm run db:types`: prints the Supabase CLI command for regenerating types. Current types are maintained in `src/lib/db/types.ts`.
 
 ## Data access
 - Pages and actions use `loadDb` / `saveDb` from `src/lib/db/store.ts` only. The in-memory model is `src/lib/db/schema.ts`; `src/lib/db/tables.ts` maps it to the tables and works out which rows changed.
