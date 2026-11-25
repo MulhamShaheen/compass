@@ -1,7 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 import { z } from "zod";
 import { deleteAccount as deleteAccountData } from "../db/store";
 import { createClient } from "../supabase/server";
@@ -19,8 +19,8 @@ function friendly(message: string, status?: number): string {
   return "The sign-in email could not be sent. Try again in a moment.";
 }
 
-/** Sends a one-time sign-in link. New addresses get an account on first use. */
-export async function sendMagicLink(input: z.input<typeof emailInput>): Promise<ActionResult> {
+/** The Supabase email template includes the code and may also include a link. */
+export async function sendSignInCode(input: z.input<typeof emailInput>): Promise<ActionResult> {
   const parsed = emailInput.safeParse(input);
   if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "That email address looks incomplete.");
   const h = await headers();
@@ -31,12 +31,28 @@ export async function sendMagicLink(input: z.input<typeof emailInput>): Promise<
     options: { emailRedirectTo: `${origin}/auth/callback` },
   });
   if (error) return fail(friendly(error.message, error.status));
-  return { ok: true, message: "Link sent. Check your inbox." };
+  return { ok: true, message: "Check your email for the sign-in code." };
+}
+
+const codeInput = emailInput.extend({
+  code: z.string().trim().regex(/^\d{6,10}$/, "Enter the numeric code from your email."),
+});
+
+export async function verifySignInCode(input: z.input<typeof codeInput>): Promise<ActionResult> {
+  const parsed = codeInput.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "Check your email and code.");
+  const supabase = await createClient();
+  const { email, code: token } = parsed.data;
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+  if (error?.status === 429) return fail("Too many attempts. Wait a little while and try again.");
+  if (error && error.status !== undefined && error.status >= 500) return fail("Sign-in is temporarily unavailable. Try again in a moment.");
+  if (error || !data.session) return fail("That code is incorrect or has expired. Check the latest email or send a new code.");
+  redirect("/", RedirectType.replace);
 }
 
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
   redirect("/login");
 }
 

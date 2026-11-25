@@ -19,8 +19,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <div className="step-body">
           <Rose />
           <h1>Sign in</h1>
-          <p className="lede">Compass sends a one-time link to your email. No password to remember. New here? The same link creates your account.</p>
-          {error === "link" && <p className="error">That link has expired or was already used. Send a new one.</p>}
+          <p className="lede">Get a one-time code by email, then enter it here. New here? Your first sign-in creates your account.</p>
+          {error === "link" && <p className="error" role="alert">That link could not sign you in. Request a code below.</p>}
           <LoginForm />
         </div>
       </div>

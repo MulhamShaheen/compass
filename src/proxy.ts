@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isLocalMode, supabaseEnv } from "./lib/supabase/env";
+import { authCookieOptions, isLocalMode, supabaseEnv } from "./lib/supabase/env";
 
 const PUBLIC_PATHS = ["/login", "/auth/", "/offline"];
 
@@ -26,6 +26,7 @@ export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
   const { url, key } = supabaseEnv();
   const supabase = createServerClient(url, key, {
+    cookieOptions: authCookieOptions,
     cookies: {
       getAll() {
         return request.cookies.getAll();
@@ -43,19 +44,14 @@ export async function proxy(request: NextRequest) {
   const signedIn = !!data?.claims?.sub;
   const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p));
 
-  if (!signedIn && !isPublic) {
-    const login = request.nextUrl.clone();
-    login.pathname = "/login";
-    login.search = "";
-    const redirect = NextResponse.redirect(login);
-    for (const c of response.cookies.getAll()) redirect.cookies.set(c);
+  if ((!signedIn && !isPublic) || (signedIn && pathname === "/login")) {
+    const target = request.nextUrl.clone();
+    target.pathname = signedIn ? "/" : "/login";
+    target.search = "";
+    const redirect = NextResponse.redirect(target);
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    redirect.headers.set("Cache-Control", "private, no-store");
     return redirect;
-  }
-  if (signedIn && pathname === "/login") {
-    const home = request.nextUrl.clone();
-    home.pathname = "/";
-    home.search = "";
-    return NextResponse.redirect(home);
   }
   return response;
 }
