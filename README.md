@@ -16,7 +16,7 @@ Open http://localhost:3000. Local mode stores one character in `.data/compass.js
 
 1. Copy [`.env.example`](.env.example) to `.env`. Fill in the Supabase URL and publishable key, plus either the database URL or the project reference, region, and database password.
 2. Run `npm run db:migrate` to apply all pending migrations. Use `npm run db:migrate -- --status` to list them.
-3. Run `npm run dev` and sign in with an email magic link. Open the link in the same browser.
+3. Add the one-time code to the [Supabase email templates](docs/AUTH.md#supabase-email-template). Run `npm run dev`, request a sign-in code, and enter it in Compass.
 4. For Vercel, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in Production and Preview. In Supabase Auth, set the Site URL to the production URL and allow the localhost and preview redirect URLs you use. Supabase's built-in email sender is limited to project-team addresses. Configure custom SMTP for other users.
 
 ### Checks
@@ -46,5 +46,6 @@ On the hosted app, compare free time against a real iCloud feed and confirm a ma
 - [Implementation plan](docs/IMPLEMENTATION_PLAN.md) tracks what landed, release checks, and the proposed Chapter Review.
 - [Daily flow notes](docs/DAILY_FLOW.md) and [calendar iteration notes](docs/CALENDAR_ITERATIONS.md) record the decisions and checks behind each change.
 - [Events and Google publishing](docs/EVENTS.md) covers points, calendar files, and the optional Google connection.
+- [PWA sign-in](docs/AUTH.md) covers email code setup and session checks.
 - [Original prototype](docs/prototype/compass.html) captures the early interaction design.
 - [Contributor guidance](CLAUDE.md) describes engineering and design conventions.
