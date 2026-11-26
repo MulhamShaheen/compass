@@ -5,6 +5,8 @@ import { redirect, RedirectType } from "next/navigation";
 import { z } from "zod";
 import { deleteAccount as deleteAccountData } from "../db/store";
 import { createClient } from "../supabase/server";
+import { supabaseEnv } from "../supabase/env";
+import { emailAuthorizationCode, emailVerificationUrl } from "../supabase/email-link";
 import { fail, type ActionResult } from "./run";
 
 const emailInput = z.object({
@@ -19,19 +21,46 @@ function friendly(message: string, status?: number): string {
   return "The sign-in email could not be sent. Try again in a moment.";
 }
 
-/** The Supabase email template includes the code and may also include a link. */
-export async function sendSignInCode(input: z.input<typeof emailInput>): Promise<ActionResult> {
-  const parsed = emailInput.safeParse(input);
-  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "That email address looks incomplete.");
+async function emailCallback() {
   const h = await headers();
   const origin = h.get("origin") ?? `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+  return new URL("/auth/callback", origin).href;
+}
+
+export async function sendSignInEmail(input: z.input<typeof emailInput>): Promise<ActionResult> {
+  const parsed = emailInput.safeParse(input);
+  if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? "That email address looks incomplete.");
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email: parsed.data.email,
-    options: { emailRedirectTo: `${origin}/auth/callback` },
+    options: { emailRedirectTo: await emailCallback() },
   });
   if (error) return fail(friendly(error.message, error.status));
-  return { ok: true, message: "Check your email for the sign-in code." };
+  return { ok: true, message: "Check your email for the sign-in link." };
+}
+
+export async function verifySignInLink(input: unknown): Promise<ActionResult> {
+  const parsed = z.string().trim().max(4096).safeParse(input);
+  const callback = await emailCallback();
+  const verify = parsed.success && emailVerificationUrl(parsed.data, supabaseEnv().url, callback);
+  if (!verify) return fail("Copy the sign-in link from your latest Compass email and paste it here.");
+  let code: string | null;
+  try {
+    const response = await fetch(verify, { redirect: "manual", cache: "no-store", signal: AbortSignal.timeout(10_000) });
+    if (response.status === 429) return fail("Too many attempts. Wait a little while and try again.");
+    if (response.status >= 500) return fail("Sign-in is temporarily unavailable. Try again in a moment.");
+    code = response.status >= 300 && response.status < 400
+      ? emailAuthorizationCode(response.headers.get("location"), callback)
+      : null;
+  } catch {
+    return fail("Sign-in is temporarily unavailable. Try again in a moment.");
+  }
+  if (code) {
+    const supabase = await createClient();
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error && data.session) redirect("/", RedirectType.replace);
+  }
+  return fail("This link could not sign you in. Request a fresh email here, then copy and paste its link.");
 }
 
 const codeInput = emailInput.extend({

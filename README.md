@@ -16,7 +16,7 @@ Open http://localhost:3000. Local mode stores one character in `.data/compass.js
 
 1. Copy [`.env.example`](.env.example) to `.env`. Fill in the Supabase URL and publishable key, plus either the database URL or the project reference, region, and database password.
 2. Run `npm run db:migrate` to apply all pending migrations. Use `npm run db:migrate -- --status` to list them.
-3. Add the one-time code to the [Supabase email templates](docs/AUTH.md#supabase-email-template). Run `npm run dev`, request a sign-in code, and enter it in Compass.
+3. Run `npm run dev`, request a sign-in email, and paste the link into Compass. [PWA sign-in instructions](docs/AUTH.md)
 4. For Vercel, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in Production and Preview. In Supabase Auth, set the Site URL to the production URL and allow the localhost and preview redirect URLs you use. Supabase's built-in email sender is limited to project-team addresses. Configure custom SMTP for other users.
 
 ### Checks
