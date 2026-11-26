@@ -31,6 +31,18 @@ npm run test:e2e
 
 The browser suite uses a separate local data file and a phone viewport. Run `npm run test:e2e:supabase` against a dedicated Supabase test project configured in `.env`. It creates and removes accounts matching `e2e-*@compass.test` and checks access rules and account deletion.
 
+### Calendar migration history
+
+If `db:migrate` stops because `calendar_sources` already exists, use the history repair command. This can happen when the calendar SQL was applied manually and its version was never recorded.
+
+```sh
+npm run db:migrate -- --repair-calendar-history
+npm run db:migrate -- --status
+npm run db:migrate
+```
+
+The repair compares the installed calendar tables, constraints, policies, privileges, indexes and functions against the calendar migrations. It records the matching versions in migration history and preserves existing calendar data. If any objects differ or are missing, the repair stops and lists the differences. Use those results to investigate the schema before running further migrations.
+
 ## Calendar setup
 
 1. Apply all pending migrations. The calendar uses Supabase Vault for credentials. Set `SUPABASE_SERVICE_ROLE_KEY` in the server environment for calendar connections and sync. Local mode can sync an ICS feed with its file store.

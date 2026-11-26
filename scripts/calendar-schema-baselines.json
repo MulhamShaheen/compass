@@ -1,0 +1,36 @@
+{
+  "20261123000000": {
+    "checkpoint index": "7ada8dd24e3846e660d65f9d8f9fb85bcee65b45f542ad356e0b6b11fcdf4120",
+    "function compass_private.delete_calendar_secret()": "260a8a1c81b213b2fcc3ec9aaabb7f447edfbcfde88e8cfd2ff1abbf8fec42bc",
+    "function public.calendar_clear()": "e4b6c21a8d5efaf6eb9bf9c16e35d2d3e1936aeb9f471533f622ca76df5a382a",
+    "function public.calendar_confirm(p_event uuid, p_quest uuid)": "ca323d8370e6252b233034039f5f9ee292a0fa90369e721d262d95c6674b08a7",
+    "function public.calendar_connect(p_user uuid, p_kind text, p_name text, p_secret text)": "005bd888e3325a84847feb7c52190b11b82ed903c72d5d32763111e275d9f8f3",
+    "function public.calendar_sync_apply(p_user uuid, p_id uuid, p_version bigint, p_events jsonb, p_deleted text[], p_replace boolean, p_cursor text)": "98fb608ab4969380c598f32e4197dfa059c39880a74e9b4118589c793a6abd79",
+    "function public.calendar_sync_read(p_user uuid, p_id uuid)": "cd4d06c52a8f0f6b91155216119bc66e84d135e8282cba71462cf4656f2d8e4f",
+    "private schema": "38576924f34fcfc3c6d659cbcd3b5e39205f062496b79cfe98abbc494c76b30d",
+    "profile column waking_end": "251d47ea72895eb9e4355612ea1c0fc4d61c9fe6319118b7d72f841ca747cda6",
+    "profile column waking_start": "8912cb4c48aa27f6771a8f8f4e496b6fa93331cfacd6ae93f5a5840a752fcca2",
+    "table compass_private.calendar_credentials": "210ef0513dbc471e9cc8a22587b29cb0630792d2567edac88b8267eccab38a7d",
+    "table public.calendar_events": "b5f6d6c61359a51554bb5ce0972c7e58c69d40850a7250205074cfcc037edba7",
+    "table public.calendar_rules": "01bd4af0b1cb9158858e7c6bb442db972bfe7b5610e9bca1fad4dc74fe73dd5a",
+    "table public.calendar_sources": "cee778575d75b685e57309075e8eb47b9d53defe20f6a85909cc766c76f9e843"
+  },
+  "20261124000000": {
+    "checkpoint index": "7ada8dd24e3846e660d65f9d8f9fb85bcee65b45f542ad356e0b6b11fcdf4120",
+    "function compass_private.delete_calendar_secret()": "260a8a1c81b213b2fcc3ec9aaabb7f447edfbcfde88e8cfd2ff1abbf8fec42bc",
+    "function public.calendar_clear()": "e4b6c21a8d5efaf6eb9bf9c16e35d2d3e1936aeb9f471533f622ca76df5a382a",
+    "function public.calendar_confirm(p_event uuid, p_quest uuid)": "589cc1c32eaee1cd5a31c3f4ef9eb14710809fecb9827129af3b81252c76399f",
+    "function public.calendar_connect(p_user uuid, p_kind text, p_name text, p_secret text)": "005bd888e3325a84847feb7c52190b11b82ed903c72d5d32763111e275d9f8f3",
+    "function public.calendar_dismiss(p_event uuid)": "5d1fb848f86145f8485efdbe5c2aebab498f2102c28be2d0efa96476f246e4d5",
+    "function public.calendar_sync_apply(p_user uuid, p_id uuid, p_version bigint, p_events jsonb, p_deleted text[], p_replace boolean, p_cursor text)": "98fb608ab4969380c598f32e4197dfa059c39880a74e9b4118589c793a6abd79",
+    "function public.calendar_sync_read(p_user uuid, p_id uuid)": "cd4d06c52a8f0f6b91155216119bc66e84d135e8282cba71462cf4656f2d8e4f",
+    "private schema": "38576924f34fcfc3c6d659cbcd3b5e39205f062496b79cfe98abbc494c76b30d",
+    "profile column waking_end": "251d47ea72895eb9e4355612ea1c0fc4d61c9fe6319118b7d72f841ca747cda6",
+    "profile column waking_start": "8912cb4c48aa27f6771a8f8f4e496b6fa93331cfacd6ae93f5a5840a752fcca2",
+    "table compass_private.calendar_credentials": "210ef0513dbc471e9cc8a22587b29cb0630792d2567edac88b8267eccab38a7d",
+    "table public.calendar_dismissals": "bb34e025315e943d428dc230301eda1e7fe560730e10aab46ff25c51f8e5009b",
+    "table public.calendar_events": "b5f6d6c61359a51554bb5ce0972c7e58c69d40850a7250205074cfcc037edba7",
+    "table public.calendar_rules": "01bd4af0b1cb9158858e7c6bb442db972bfe7b5610e9bca1fad4dc74fe73dd5a",
+    "table public.calendar_sources": "cee778575d75b685e57309075e8eb47b9d53defe20f6a85909cc766c76f9e843"
+  }
+}
