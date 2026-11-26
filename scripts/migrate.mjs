@@ -3,6 +3,7 @@
  *
  * Usage: npm run db:migrate            (applies pending migrations)
  *        npm run db:migrate -- --status (lists applied and pending)
+ *        npm run db:migrate -- --repair-calendar-history (checks and records an existing calendar schema)
  *
  * Connection: SUPABASE_DB_URL if set, otherwise the IPv4 session pooler built from
  * SUPABASE_PROJECT_REF, SUPABASE_REGION and SUPABASE_PASSWORD (all read from .env).
@@ -12,9 +13,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import pg from "pg";
+import { repairCalendarHistory } from "./repair-calendar-history.mjs";
 
 const dir = path.join(process.cwd(), "supabase", "migrations");
 const statusOnly = process.argv.includes("--status");
+const repair = process.argv.includes("--repair-calendar-history");
+if (repair && statusOnly) throw new Error("Run --status and --repair-calendar-history separately.");
 
 function connectionString() {
   if (process.env.SUPABASE_DB_URL) return process.env.SUPABASE_DB_URL;
@@ -35,6 +39,13 @@ try {
       version text primary key, statements text[], name text
     );
   `);
+  if (repair) await repairCalendarHistory(client, dir);
+  else await applyMigrations(client);
+} finally {
+  await client.end();
+}
+
+async function applyMigrations(client) {
   const applied = new Set((await client.query("select version from supabase_migrations.schema_migrations")).rows.map((r) => r.version));
   const files = fs.readdirSync(dir).filter((f) => /^\d+_.+\.sql$/.test(f)).sort();
   for (const file of files) {
@@ -60,6 +71,4 @@ try {
       throw e;
     }
   }
-} finally {
-  await client.end();
 }
