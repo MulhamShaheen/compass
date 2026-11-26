@@ -5,7 +5,7 @@ The [product spec](PRODUCT.md) describes how Compass works. The [README](../READ
 ## 1. Architecture
 
 - Next.js 16 App Router, TypeScript, and React serve the dashboard and server actions. Tailwind CSS and the tokens in `src/styles/tokens.css` define the themes. The app uses Orbitron, Rajdhani, and Share Tech Mono.
-- Supabase provides Postgres and one-time email code sign-in. Row Level Security limits access to each user's data. The Next.js proxy refreshes the session. Local development and the default browser suite can use a JSON file.
+- Supabase provides Postgres and email sign-in. Row Level Security limits access to each user's data. The Next.js proxy refreshes the session. Local development and the default browser suite can use a JSON file.
 - Zod validates server-action input. The core store maps rows to the model in `src/lib/db/schema.ts`. The calendar store handles providers and keeps their secrets in Supabase Vault in hosted environments.
 - SQL files in [supabase/migrations](../supabase/migrations) define the schema and policies. TypeScript definitions live in [src/lib/db/types.ts](../src/lib/db/types.ts).
 
@@ -40,7 +40,7 @@ Evening checkpoint reflection landed in [PR #5](https://github.com/MulhamShaheen
 
 ### Hosted release checks
 
-- Verify code sign-in and relaunch on an installed PWA. [PWA sign-in setup](AUTH.md)
+- Verify sign-in with the default email and relaunch on an installed PWA. [PWA sign-in](AUTH.md)
 - Install the PWA on a real iPhone and Android device.
 - Complete the live iCloud and Google checks in the [calendar setup](../README.md#calendar-setup).
 - Verify Google consent and writes from Events. [Events setup](EVENTS.md#google-calendar-setup)

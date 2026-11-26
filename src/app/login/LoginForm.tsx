@@ -2,40 +2,47 @@
 
 import { useState } from "react";
 import { useAction } from "@/components/Toast";
-import { sendSignInCode, verifySignInCode } from "@/lib/actions/auth";
+import { sendSignInEmail, verifySignInCode, verifySignInLink } from "@/lib/actions/auth";
 
-function CodeForm({ email, onChangeEmail }: { email: string; onChangeEmail: () => void }) {
+function VerifyForm({ email, onChangeEmail }: { email: string; onChangeEmail: () => void }) {
   const { go, pending, error } = useAction();
-  const [code, setCode] = useState("");
+  const [codeMode, setCodeMode] = useState(false);
+  const [value, setValue] = useState("");
   return (
     <form className="step-body" onSubmit={(event) => {
       event.preventDefault();
-      go(() => verifySignInCode({ email, code }));
+      go(() => codeMode ? verifySignInCode({ email, code: value }) : verifySignInLink(value));
     }}>
-      <p className="lede">Enter the code sent to <strong>{email}</strong>.</p>
-      <label htmlFor="sign-in-code">Sign-in code</label>
+      <p className="lede">Check <strong>{email}</strong>. {codeMode ? "Enter the code from the email." : "Copy the link address in the email and paste it here to stay in Compass."}</p>
+      <label htmlFor="sign-in-proof">{codeMode ? "Sign-in code" : "Sign-in link"}</label>
       <input
-        id="sign-in-code"
-        type="text"
-        inputMode="numeric"
-        autoComplete="one-time-code"
-        pattern="[0-9]{6,10}"
-        maxLength={10}
-        value={code}
-        onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
+        key={String(codeMode)}
+        id="sign-in-proof"
+        type={codeMode ? "text" : "url"}
+        inputMode={codeMode ? "numeric" : "url"}
+        autoComplete={codeMode ? "one-time-code" : "off"}
+        autoCapitalize="none"
+        spellCheck={false}
+        maxLength={codeMode ? 10 : 4096}
+        value={value}
+        onChange={(event) => setValue(codeMode ? event.target.value.replace(/\D/g, "") : event.target.value)}
         disabled={pending}
         required
         autoFocus
       />
       {error && <p className="error" role="alert">{error}</p>}
       <div className="actions">
-        <button className="btn" type="submit" disabled={pending || code.length < 6}>
+        <button className="btn" type="submit" disabled={pending || value.trim().length < (codeMode ? 6 : 1)}>
           {pending ? "Please wait…" : "Sign in"}
         </button>
         <button className="link" type="button" disabled={pending} onClick={() => go(
-          () => sendSignInCode({ email }),
-          () => setCode(""),
-        )}>Send a new code</button>
+          () => sendSignInEmail({ email }),
+          () => setValue(""),
+        )}>Send another email</button>
+        <button className="link" type="button" disabled={pending} onClick={() => {
+          setCodeMode(!codeMode);
+          setValue("");
+        }}>{codeMode ? "Paste a link instead" : "Enter a code instead"}</button>
         <button className="link" type="button" disabled={pending} onClick={onChangeEmail}>Use another email</button>
       </div>
     </form>
@@ -50,7 +57,7 @@ function EmailForm({ initialEmail, onSent }: { initialEmail: string; onSent: (em
     <form className="step-body" onSubmit={(event) => {
       event.preventDefault();
       const address = email.trim().toLowerCase();
-      go(() => sendSignInCode({ email: address }), () => onSent(address));
+      go(() => sendSignInEmail({ email: address }), () => onSent(address));
     }}>
       <label htmlFor="sign-in-email">Email address</label>
       <input
@@ -68,7 +75,7 @@ function EmailForm({ initialEmail, onSent }: { initialEmail: string; onSent: (em
       {error && <p className="error" role="alert">{error}</p>}
       <div>
         <button className="btn" type="submit" disabled={pending || !email.trim()}>
-          {pending ? "Sending…" : "Send sign-in code"}
+          {pending ? "Sending…" : "Send sign-in email"}
         </button>
       </div>
     </form>
@@ -77,8 +84,8 @@ function EmailForm({ initialEmail, onSent }: { initialEmail: string; onSent: (em
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
-  const [awaitingCode, setAwaitingCode] = useState(false);
-  return awaitingCode
-    ? <CodeForm email={email} onChangeEmail={() => setAwaitingCode(false)} />
-    : <EmailForm initialEmail={email} onSent={(address) => { setEmail(address); setAwaitingCode(true); }} />;
+  const [awaitingEmail, setAwaitingEmail] = useState(false);
+  return awaitingEmail
+    ? <VerifyForm email={email} onChangeEmail={() => setAwaitingEmail(false)} />
+    : <EmailForm initialEmail={email} onSent={(address) => { setEmail(address); setAwaitingEmail(true); }} />;
 }

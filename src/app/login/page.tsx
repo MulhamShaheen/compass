@@ -19,8 +19,8 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <div className="step-body">
           <Rose />
           <h1>Sign in</h1>
-          <p className="lede">Get a one-time code by email, then enter it here. New here? Your first sign-in creates your account.</p>
-          {error === "link" && <p className="error" role="alert">That link could not sign you in. Request a code below.</p>}
+          <p className="lede">Request a sign-in email to continue. New here? Your first sign-in creates your account.</p>
+          {error === "link" && <p className="error" role="alert">That link could not sign you in. Request a fresh email from the app.</p>}
           <LoginForm />
         </div>
       </div>

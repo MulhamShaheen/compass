@@ -1,21 +1,19 @@
 # PWA sign-in
 
-## Supabase email template
+## Sign in with the default Supabase email
 
-Before deploying code sign-in, open your Supabase dashboard and go to **Authentication → Email Templates**. Edit **Magic Link** and **Confirm signup**. Add this line to each template body.
+1. Open Compass from the home screen and choose **Send sign-in email**.
+2. In your email app, touch and hold the sign-in button or link and select **Copy Link**. On desktop, right-click and copy the link address.
+3. Return to Compass, paste it into **Sign-in link**, and select **Sign in**. If the link has expired or was already opened, send another email and copy the fresh link.
 
-```html
-<p>Your Compass sign-in code is <strong>{{ .Token }}</strong>. Enter it in Compass.</p>
-```
+This uses the default Supabase email. For an email template that already includes a numeric code, choose **Enter a code instead**.
 
-Keep the existing link in both templates during rollout. This lets users on older app versions sign in while the code flow is deploying.
-
-## Iteration 10 — Sign in inside Compass
-
-Request a code from Compass, read it in your email, and enter it in the same Compass window. You can paste the code or use your device’s one-time-code autofill. If the code expires, request another from the same screen.
+## Session and hosted verification
 
 Compass stores the session in persistent cookies and carries refreshed cookies through sign-in redirects. Relaunching the app on the same device and site reuses that session until it expires, is revoked, or is cleared. **Sign out** ends the session in that browser or installed app.
 
-## Hosted verification
+Install Compass from the deployment you plan to use, request a fresh email, and paste its link into the app. Close and reopen Compass to verify it returns to your map.
 
-Install Compass from the deployment you plan to use. Request a code inside the installed app, enter it, then close and reopen Compass. Check that it returns to your map. Sign out and verify that reopening Compass shows the sign-in screen.
+## Iteration 11 — Support the default sign-in email
+
+Paste the one-time link to finish sign-in in the same Compass window. The server accepts only the configured Supabase project's sign-in endpoint, reads the authorization code from its redirect without following it, and exchanges the code using the app's saved PKCE verifier.
